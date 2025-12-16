@@ -161,7 +161,21 @@ const renderBaseIV = (label, value, color) => `
       </div>
     </div>
 
-
+<div style="
+  margin-bottom:8px;
+  padding:6px;
+  border:1px solid #444;
+  border-radius:6px;
+  text-align:center;
+  background:#111;
+">
+  <div style="font-size:1.2em;">
+    ${renderStars(appraisal.stars, appraisal.color)}
+  </div>
+  <div style="font-size:0.85em; color:${appraisal.color}; font-weight:bold;">
+    ${appraisal.label} IV (${poke.ivs.attack + poke.ivs.defense + poke.ivs.stamina}/45)
+  </div>
+</div>
   <div style="display:flex; flex-direction:column; font-size:0.9em; margin-bottom:8px;">
   <strong style="color:#7CFC00;">Base IV Stats (0–15):</strong>
 
@@ -182,21 +196,7 @@ const renderBaseIV = (label, value, color) => `
 </div>
 
 
-<div style="
-  margin-bottom:8px;
-  padding:6px;
-  border:1px solid #444;
-  border-radius:6px;
-  text-align:center;
-  background:#111;
-">
-  <div style="font-size:1.2em;">
-    ${renderStars(appraisal.stars, appraisal.color)}
-  </div>
-  <div style="font-size:0.85em; color:${appraisal.color}; font-weight:bold;">
-    ${appraisal.label} IV (${poke.ivs.attack + poke.ivs.defense + poke.ivs.stamina}/45)
-  </div>
-</div>
+
 
 
 <div style="display:flex; gap:12px; font-size:0.9em; margin-bottom:6px;">
@@ -470,6 +470,7 @@ async function catchPokemon(ballType = "pokeball", onComplete = null) {
   isCatching = false;
   if (onComplete) onComplete();
 }
+
 
 
 
