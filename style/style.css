@@ -1,0 +1,430 @@
+/* =========================
+   GENERAL STYLING
+========================= */
+body {
+  font-family: Arial, sans-serif;
+  background: #f2f2f2;
+  margin: 0;
+  padding: 0;
+}
+
+header {
+  text-align: center;
+  padding: 6px 0;
+  background: #333;
+  color: #fff;
+  font-size: 0.95em;
+}
+
+.small {
+  font-size: 0.7em;
+  color: #ddd;
+}
+
+/* =========================
+   PANELS
+========================= */
+.panel {
+  background: #fff;
+  border: 1px solid #ccc;
+  padding: 8px;
+  border-radius: 6px;
+  box-shadow: 1px 1px 6px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.panel h2 {
+  margin: 0 0 4px 0;
+  font-size: 14px;
+  text-align: center;
+}
+
+.main-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: nowrap;
+}
+
+.panel-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  padding: 8px;
+}
+
+/* Scrollable displays */
+#wildDisplay, #itemsDisplay, #nurseDisplay,
+#partyDisplay, #shopItems, #storageDisplay {
+  background: #eee;
+  padding: 4px;
+  border-radius: 4px;
+  overflow-y: auto;
+  max-height: 200px;
+  font-size: 0.8em;
+}
+
+/* Party Display Images */
+#partyDisplay img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  margin-bottom: 4px;
+  border: 1px solid #333;
+  border-radius: 4px;
+  background: #fff;
+  transition: transform 0.15s ease-in-out, border 0.2s;
+}
+
+#partyDisplay img:hover {
+  transform: scale(1.2);
+  cursor: pointer;
+}
+
+#partyDisplay img.active {
+  border: 2px solid #2196F3;
+  box-shadow: 0 0 6px #2196F3;
+}
+
+/* BUTTONS */
+button {
+  margin: 2px;
+  padding: 4px 8px;
+  border: none;
+  border-radius: 4px;
+  background: #4CAF50;
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.8em;
+}
+
+button.primary {
+  background: #2196F3;
+  z-index: 10;
+}
+
+button:disabled {
+  background: #aaa;
+  cursor: not-allowed;
+}
+
+/* PLAYER / SHOP DISPLAYS */
+#playerDisplay, #playerCoins {
+  background: #eee;
+  padding: 4px;
+  border-radius: 4px;
+  font-size: 0.8em;
+}
+
+#storageDisplay {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+}
+
+/* =========================
+   GBA / BATTLE SCREEN
+========================= */
+.gba-shell {
+  flex: 1;
+  min-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.battle-screen {
+  position: relative;
+  width: 91%;
+  height: 250px;
+  background: #9bbc0f;
+  border: 2px solid #333;
+  border-radius: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  overflow: hidden;
+  padding: 0 20px;
+}
+
+/* ENEMY / PLAYER CONTAINERS */
+.enemy-container, .player-container {
+  position: relative;
+  width: 220px;
+  height: 220px;
+}
+
+.enemy-container .hp-box,
+.player-container .hp-box {
+  position: absolute;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  z-index: 2;
+}
+
+.enemy-container .hp-box { top: -25px; left: -15px; }
+.player-container .hp-box { bottom: 0; left: 0; }
+
+/* SPRITES */
+.enemy-container img#wildSprite,
+.player-container img#playerSprite {
+  position: absolute;
+  width: 140px;
+  height: 140px;
+  max-width: 100%;
+  max-height: 100%;
+  z-index: 10;
+  transition: transform 0.5s ease, opacity 0.5s ease, filter 0.5s ease;
+}
+
+.enemy-container img#wildSprite {
+  bottom: 90px;
+  left: 155%;
+  transform: translateX(-50%) scale(1);
+}
+
+.player-container img#playerSprite {
+  bottom: -15px;
+  left: -60%;
+  transform: translateX(-50%) scaleX(-1);
+}
+
+/* HP & ENERGY BARS */
+.hp-box {
+  background: rgba(255,255,255,0.9);
+  border: 2px solid #333;
+  border-radius: 4px;
+  padding: 4px;
+  font-size: 0.7em;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.hp-bar-outer {
+  width: 100%;
+  height: 10px;
+  background: #999;
+  border: 1px solid #333;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.hp-bar-inner {
+  height: 100%;
+  width: 100%;
+  background-color: #4caf50;
+  border-radius: 2px;
+  transition: width 0.3s, background-color 0.3s;
+}
+
+.hp-bar-inner.hp-green { background-color: #4caf50 !important; }
+.hp-bar-inner.hp-yellow { background-color: #ffc107 !important; }
+.hp-bar-inner.hp-red { background-color: #f44336 !important; }
+
+.energy-bar-outer {
+  width: 100%;
+  height: 8px;
+  background: #ccc;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.energy-bar-inner { background-color: #2196F3 !important; }
+
+/* MOVES */
+.moves-box {
+  background: rgba(255,255,255,0.7);
+  border: 2px solid #333;
+  border-radius: 4px;
+  padding: 6px;
+  min-height: 90px;
+}
+
+.move-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px;
+}
+
+.move-buttons button {
+  font-size: 0.65em;
+  padding: 6px;
+  background: #ffae00;
+  border: 2px solid #333;
+  font-family: 'Press Start 2P', monospace;
+  white-space: nowrap;
+  min-width: 80px;
+}
+
+.move-buttons button:active {
+  transform: scale(0.96);
+}
+
+/* MESSAGE BOX */
+.message-box {
+  background: #fff;
+  border: 2px solid #333;
+  border-radius: 4px;
+  padding: 6px;
+  font-size: 0.7em;
+  min-height: 300px;
+  max-height: 300px;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+  white-space: pre-line;
+  word-wrap: break-word;
+}
+
+/* LOG COLORS */
+.log-player { color: #4CAF50; font-weight: bold; }
+.log-wild { color: #d32f2f; font-weight: bold; }
+.log-normal { color: #000; }
+
+/* SHINY POKÉMON */
+img.shiny {
+  display: block;
+  margin: 0 auto;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  position: relative;
+  animation: shimmer 2.5s infinite ease-in-out;
+  transition: transform 0.3s ease;
+}
+
+img.shiny:hover { transform: scale(1.1); }
+
+img.shiny::after {
+  content: '';
+  position: absolute;
+  top: 20%;
+  left: 30%;
+  width: 4px;
+  height: 4px;
+  background: gold;
+  border-radius: 50%;
+  opacity: 0;
+  animation: sparkle 1.5s infinite ease-in-out;
+  pointer-events: none;
+}
+
+@keyframes shimmer { 0%,100%{filter:brightness(1);}50%{filter:brightness(1.8) saturate(1.5);} }
+@keyframes sparkle {0%{opacity:0;transform:scale(0.3);}50%{opacity:1;transform:scale(1);}100%{opacity:0;transform:scale(0.3);}}
+
+/* FAINTED SPRITES */
+.player-container img#playerSprite.fainted,
+.enemy-container img#wildSprite.fainted {
+  transition: transform 0.5s, filter 0.5s, opacity 0.5s;
+  z-index: 15;
+}
+
+.player-container img#playerSprite.fainted {
+  bottom: -15px; left: -60%; transform: translateX(-50%) scaleX(-1) rotate(-15deg);
+}
+
+.enemy-container img#wildSprite.fainted {
+  bottom: 90px; left: 155%; transform: translateX(-50%) scale(1) rotate(-15deg);
+}
+
+.fainted::after {
+  content: "✖️";
+  position: absolute;
+  top: 25%;
+  left: 50%;
+  transform: translate(-50%,-50%) scale(1.5);
+  font-size: 2em;
+  color: red;
+  pointer-events: none;
+  text-shadow: 0 0 5px black, 0 0 10px red;
+}
+
+.fainted-animate {
+  animation: faintFallDramatic 0.9s ease forwards;
+}
+
+@keyframes faintFallDramatic {
+  0% {transform:translateX(-50%) rotate(-15deg) translateY(0) scale(1); opacity:0.6; filter:grayscale(80%) brightness(60%);}
+  30%{transform:translateX(-50%) rotate(-25deg) translateY(12px) scale(0.95);opacity:0.55;}
+  60%{transform:translateX(-50%) rotate(-35deg) translateY(25px) scale(0.9);opacity:0.45;}
+  80%{transform:translateX(-50%) rotate(-45deg) translateY(35px) scale(0.85);opacity:0.35;}
+  100%{transform:translateX(-50%) rotate(-55deg) translateY(45px) scale(0.8);opacity:0.3;filter:grayscale(100%) brightness(40%);}
+}
+
+/* ITEM BUTTONS */
+.item-buttons-grid {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 3px;
+  margin-top: 2px;
+}
+
+.item-category { margin-bottom: 4px; }
+.itemButton { padding: 2px 4px; font-size: 10px; height: 24px; }
+.shopButton { padding: 4px 6px; font-size: 10px; min-width: 60px; white-space: nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer; }
+
+/* MAP PANEL */
+#mapPanel {
+  height: 140px; max-height:140px; min-height:140px;
+  overflow-y:auto; padding:8px;
+  border:1px solid #ccc; background-color:#f9f9f9;
+  transition: height 0.2s ease-in-out;
+}
+
+#regionButtons, #mapButtons { display:flex; flex-wrap:wrap; gap:4px; }
+.region-btn, .route-btn { flex:1 1 auto; padding:4px 6px; cursor:pointer; font-size:0.9em; }
+
+/* ROUTE BUTTONS */
+.route-btn { background-color:#4CAF50; color:#fff; border:1px solid #333; border-radius:4px; padding:4px 8px; font-size:0.8em; transition:0.3s; }
+.route-btn:disabled { background-color:#aaa;color:#666;cursor:not-allowed; }
+
+/* DARK MODE */
+body.dark-mode {
+  background:#1e1e1e; color:#ddd; transition:0.3s;
+}
+
+body.dark-mode header { background: rgba(17,17,17,0.9); }
+body.dark-mode .panel,#partyDisplay,#itemsDisplay,#storageDisplay,#shopItems,#playerDisplay,.moves-box,.message-box {
+  background: rgba(50,50,50,0.8); color:#ddd; border-color:#666;
+}
+
+body.dark-mode .hp-box { background: rgba(68,68,68,0.8); border-color:#888; }
+body.dark-mode button { background:#555;color:#fff; }
+body.dark-mode button.primary { background:#2196F3; }
+
+body.dark-mode .route-btn { background-color:#2196F3;color:#fff; }
+body.dark-mode .route-btn:disabled { background-color:#555;color:#888; }
+
+body.dark-mode #mapPanel { background-color: rgba(40,40,40,0.9); border-color:#666; color:#ddd; }
+body.dark-mode .region-btn, body.dark-mode .route-btn { background-color:#444;color:#fff;border-color:#888; }
+body.dark-mode .region-btn:hover, body.dark-mode .route-btn:hover { background-color:#2196F3;color:#fff; }
+.region-btn.selected, .route-btn.selected { background-color:#ffae00;color:#000;border-color:#ff9500; }
+body.dark-mode .region-btn.selected, body.dark-mode .route-btn.selected { background-color:#ffa500;color:#1e1e1e;border-color:#ff8c00; }
+
+/* ANIMATIONS */
+@keyframes throwPokeball {0%{transform:translate(0,0) scale(1);}50%{transform:translate(200px,-150px) rotate(360deg) scale(1);}100%{transform:translate(200px,0) rotate(720deg) scale(0.5);}}
+@keyframes shakeWild {0%,100%{transform:translateX(0);}25%{transform:translateX(-8px);}50%{transform:translateX(8px);}75%{transform:translateX(-8px);}}
+.player-attack { animation: playerAttackAnim 0.45s forwards ease-out; }
+@keyframes playerAttackAnim {0%{transform:translate(0,0) scale(1);}40%{transform:translate(80px,-70px) scale(1.1);}100%{transform:translate(0,0) scale(1);}}
+.enemy-attack { animation: enemyAttackAnim 0.45s forwards ease-out; }
+@keyframes enemyAttackAnim {0%{transform:translate(0,0) scale(1);}40%{transform:translate(-80px,70px) scale(1.1);}100%{transform:translate(0,0) scale(1);}}
+.hit-shake { animation: hitShake 0.28s linear; }
+@keyframes hitShake {0%{transform:translate(0,0);}20%{transform:translate(-6px,0);}40%{transform:translate(6px,0);}60%{transform:translate(-6px,0);}80%{transform:translate(6px,0);}100%{transform:translate(0,0);}}
+.hit-flash { animation: hitFlash 0.25s ease-out; }
+@keyframes hitFlash {0%{filter:brightness(1);}50%{filter:brightness(2);}100%{filter:brightness(1);}}
+.faint { animation: faintAnim 0.9s forwards ease-out; }
+@keyframes faintAnim {0%{opacity:1;transform:translateY(0) scale(1);filter:grayscale(0);}100%{opacity:0;transform:translateY(40px) scale(0.8);filter:grayscale(1);}}
+.pokeball-glow {
+  animation: pokeballGlow 1s ease-in-out;
+  filter: drop-shadow(0 0 15px gold) brightness(1.5);
+}
+
+/* Use a CSS variable for the translate + rotate so glow doesn't move the ball */
+@keyframes pokeballGlow {
+  0%   { transform: var(--ball-transform) scale(1); filter: drop-shadow(0 0 0px gold) brightness(1); }
+  50%  { transform: var(--ball-transform) scale(1.2); filter: drop-shadow(0 0 20px gold) brightness(1.8); }
+  100% { transform: var(--ball-transform) scale(1); filter: drop-shadow(0 0 0px gold) brightness(1); }
+}

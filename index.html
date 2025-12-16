@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Mini Pokémon RPG — v1.2</title>
+  <link rel="stylesheet" href="style/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<header>
+  <h4>Mini Pokémon RPG — v1.2</h4>
+  <p class="small">Routes • Wild Encounters • EXP • Items • Coins • Save/Load</p>
+</header>
+
+<!-- MAP PANEL -->
+<section class="panel" id="mapPanel">
+  <h2>Map & Routes</h2>
+  <div id="regionButtons"></div>
+  <div id="mapButtons"></div>
+</section>
+
+<!-- MAIN PANELS ROW -->
+<div class="main-row" style="display:flex; gap:10px; flex-wrap: nowrap;">
+
+  <!-- WILD ENCOUNTER PANEL -->
+  <section class="panel" id="battlePanel" style="flex:1">
+    <div class="message-box" id="battleMessage">Welcome to Pokémon!</div>
+    <h2>Switch Pokémon</h2>
+    <div id="partyDisplay"></div>
+
+
+    <button id="evolveBtn" onclick="evolvePokemon()">Evolve</button>
+
+    <div id="switchMenu" style="display:none;border:2px solid black;padding:10px;background:white;">
+      <h3>Choose Pokémon</h3>
+      <div id="switchList"></div>
+    </div>
+  </section>
+<section>
+
+
+
+
+<!-- MIDDLE PANEL: GBA SCREEN / Battle -->
+<div class="panel gba-shell" style="flex:1; min-width:400px;"> <!-- middle panel stretchable -->
+  <h2>Battle</h2>
+  
+  <div class="gba-screen">
+    <div class="battle-screen">
+
+      <!-- Enemy -->
+      <div class="enemy-container">
+        <div class="hp-box">
+          <div class="name-level">
+            <span id="wildName">—</span> Lv:<span id="wildLevel">0</span>
+            <span id="wildCP" class="cp-display" style="margin-left:6px;">• CP 0</span>
+          </div>
+          <div class="bars-row">
+            <div class="hp-bar-outer hp-horizontal">
+              <div id="enemyHPBar" class="hp-bar-inner hp-green"></div>
+            </div>
+            <div class="hp-bar-outer hp-horizontal">
+              <div id="enemyEnergyBar" class="hp-bar-inner hp-blue"></div>
+            </div>
+          </div>
+          <div class="hp-text">
+            <span id="enemyHP">0</span>/<span id="enemyHPMax">0</span>
+            | Energy: <span id="enemyEnergy">0</span>/<span id="enemyMaxEnergy">100</span>
+          </div>
+        </div>
+   
+  <img id="wildSprite" src="" alt="Wild Pokémon"class="pokemon-sprite">
+
+      </div>
+
+      <!-- Player -->
+      <div class="player-container">
+        <img id="playerSprite" src="" alt="Player Pokémon"class="pokemon-sprite">
+<img id="pokeballThrow" src="img/greatball.png" 
+     style="position:absolute; left:-50%; top:70%; width:40px; height:40px; 
+            transform:translateX(-50%) translateY(0); display:none;"
+     alt="Pokéball">
+
+
+        <div class="hp-box">
+
+          <div class="name-level">
+            <span id="activeName">—</span> Lv:<span id="activeLevel">0</span>
+            <span id="playerCP" class="cp-display" style="margin-left:6px;">• CP 0</span>
+          </div>
+          <div class="bars-row">
+            <div class="hp-bar-outer hp-horizontal">
+              <div id="playerHPBar" class="hp-bar-inner hp-green"></div>
+            </div>
+            <div class="hp-bar-outer hp-horizontal">
+              <div id="playerEnergyBar" class="hp-bar-inner hp-blue"></div>
+            </div>
+          </div>
+          <div class="hp-text">
+            <span id="playerHP">0</span>/<span id="playerHPMax">0</span>
+            | Energy: <span id="playerEnergy">0</span>/<span id="playerMaxEnergy">100</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Moves & Items -->
+  <div class="moves-box">
+    <p class="small">Current Route: <span id="currentRoute">None</span></p>
+    <div class="move-buttons">
+      <button id="searchWildBtn" onclick="encounterWild()" class="primary">Search Wild</button>
+      <button onclick="playerTurn('flee')">Flee</button>
+    </div>
+    <div class="move-buttons">
+      <button id="move0" onclick="playerTurn('attack',{moveIndex:0})">—</button>
+      <button id="move1" onclick="playerTurn('attack',{moveIndex:1})">—</button>
+      <button id="move2" onclick="playerTurn('attack',{moveIndex:2})">—</button>
+      <button id="move3" onclick="playerTurn('attack',{moveIndex:3})">—</button>
+    </div>
+    <div>Items
+      <p id="itemsDisplay"></p>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+
+
+ </section>   
+  <!-- PLAYER PANEL -->
+  <section class="panel" id="playerPanel" style="flex:1">
+    <h2>Player</h2>
+    <div id="playerDisplay">Lv: 5 | EXP: 0 | Coins: 100</div>
+
+    <h2>Town / Pokémon Center</h2>
+    <div id="nurseDisplay">Need healing?</div>
+    <button onclick="healAllPokemon()">Heal All </button>
+
+    <h2>Shop</h2>
+    <div id="shopItems"></div>
+    <p id="playerCoins">Coins: 50</p>
+
+    <h3>Save / Load</h3>
+    <button onclick="saveGame()">Save</button>
+    <button onclick="loadGame()">Load</button>
+    <button onclick="clearSave()">Clear Save</button>
+
+    <div style="text-align:center;margin:6px 0;">
+      <button onclick="toggleDarkMode()">🌓 Dark Mode</button>
+    </div>
+  </section>
+
+</div>
+
+<!-- STORAGE PANEL -->
+<section class="panel" id="storagePanel">
+  <h2>Storage</h2>
+  <div id="storageDisplay">No Pokémon in storage.</div>
+</section>
+
+<script>
+  // ------------------ DARK MODE ------------------
+  function toggleDarkMode() {
+    document.body.classList.toggle('dark-mode');
+    localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+  }
+
+  window.addEventListener('DOMContentLoaded', () => {
+    if (localStorage.getItem('darkMode') === 'true')
+      document.body.classList.add('dark-mode');
+  });
+</script>
+
+<!-- YOUR OTHER SCRIPTS -->
+<script src="data/movesdb.js"></script>
+<script src="data/pokemondb.js"></script>
+<script src="data/pokemonImages.js"></script>
+<script src="data/routes.js"></script>
+
+
+
+<script src="js/game.js"></script>
+<script src="js/battle.js"></script>
+<script src="js/journey.js"></script> 
+<script src="js/player.js"></script>
+<script src="js/item.js"></script>
+
+<script src="util/settings.js"></script>
+
+
+
+</body>
+</html>
