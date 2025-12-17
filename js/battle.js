@@ -303,30 +303,36 @@ function resetWildSpritePosition(mode = "auto") {
   const wildSprite = document.getElementById("wildSprite");
   if (!wildSprite) return;
 
+  // Reset classes & styles
   wildSprite.className = "";
   wildSprite.style.transition = "none";
   wildSprite.style.position = "absolute";
+  wildSprite.style.opacity = "1";
+  wildSprite.style.zIndex = "9999";
 
-  // 🔍 detect file if auto
+  // Detect file if auto
   if (mode === "auto") {
     const path = window.location.pathname;
     mode = path.includes("index-m") ? "mobile" : "pc";
   }
 
+  // Set position & scale based on mode
+  let top, left, scale;
   if (mode === "mobile") {
-    // 📱 index-m.html
-    wildSprite.style.top = "50px";
-    wildSprite.style.left = "400px";
+    top = "10%";
+    left = "82%";
+    scale = 1.8;
   } else {
-    // 🖥️ index.html
-    wildSprite.style.top = "10px";
-    wildSprite.style.left = "165%";
+    top = "10px";
+    left = "165%";
+    scale = 1;
   }
 
-  wildSprite.style.transform = "translate(-50%, 0) scale(1) rotate(0deg)";
-  wildSprite.style.opacity = "1";
-  wildSprite.style.zIndex = "9999";
+  wildSprite.style.top = top;
+  wildSprite.style.left = left;
+  wildSprite.style.transform = `translate(-50%, 0) scale(${scale}) rotate(0deg)`;
 
+  // Apply smooth transition
   requestAnimationFrame(() => {
     wildSprite.style.transition = "transform 0.5s ease, opacity 0.5s ease";
   });
