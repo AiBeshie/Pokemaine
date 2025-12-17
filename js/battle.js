@@ -146,6 +146,7 @@ function updateBattleScreen(pokemon, isPlayer = true) {
 // ------------------ PLAYER & WILD TURN ------------------
 // Wild encounter
 function encounterWild() {
+  resetWildSpritePosition(); 
   const player = window.player.party[window.player.activeIndex];
   if (!player) return;
   const route = window.currentRoute;
@@ -198,7 +199,6 @@ function encounterWild() {
   renderParty();
   appendBattleLog(`A wild ${isShiny ? "✨ " : ""}${wild.pokemon_name} appeared!`);
 }
-
 // Player action
 function playerTurn(action, options = {}) {
   const active = window.player.party[window.player.activeIndex];
@@ -298,6 +298,40 @@ function wildTurn() {
     }
   }
 }
+
+function resetWildSpritePosition(mode = "auto") {
+  const wildSprite = document.getElementById("wildSprite");
+  if (!wildSprite) return;
+
+  wildSprite.className = "";
+  wildSprite.style.transition = "none";
+  wildSprite.style.position = "absolute";
+
+  // 🔍 detect file if auto
+  if (mode === "auto") {
+    const path = window.location.pathname;
+    mode = path.includes("index-m") ? "mobile" : "pc";
+  }
+
+  if (mode === "mobile") {
+    // 📱 index-m.html
+    wildSprite.style.top = "50px";
+    wildSprite.style.left = "400px";
+  } else {
+    // 🖥️ index.html
+    wildSprite.style.top = "10px";
+    wildSprite.style.left = "165%";
+  }
+
+  wildSprite.style.transform = "translate(-50%, 0) scale(1) rotate(0deg)";
+  wildSprite.style.opacity = "1";
+  wildSprite.style.zIndex = "9999";
+
+  requestAnimationFrame(() => {
+    wildSprite.style.transition = "transform 0.5s ease, opacity 0.5s ease";
+  });
+}
+
 
 // ------------------ APPEND LOG ------------------
 function appendBattleLog(message, source = "player") {

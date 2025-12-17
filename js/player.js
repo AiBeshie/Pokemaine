@@ -161,21 +161,7 @@ const renderBaseIV = (label, value, color) => `
       </div>
     </div>
 
-<div style="
-  margin-bottom:8px;
-  padding:6px;
-  border:1px solid #444;
-  border-radius:6px;
-  text-align:center;
-  background:#111;
-">
-  <div style="font-size:1.2em;">
-    ${renderStars(appraisal.stars, appraisal.color)}
-  </div>
-  <div style="font-size:0.85em; color:${appraisal.color}; font-weight:bold;">
-    ${appraisal.label} IV (${poke.ivs.attack + poke.ivs.defense + poke.ivs.stamina}/45)
-  </div>
-</div>
+
   <div style="display:flex; flex-direction:column; font-size:0.9em; margin-bottom:8px;">
   <strong style="color:#7CFC00;">Base IV Stats (0–15):</strong>
 
@@ -196,7 +182,21 @@ const renderBaseIV = (label, value, color) => `
 </div>
 
 
-
+<div style="
+  margin-bottom:8px;
+  padding:6px;
+  border:1px solid #444;
+  border-radius:6px;
+  text-align:center;
+  background:#111;
+">
+  <div style="font-size:1.2em;">
+    ${renderStars(appraisal.stars, appraisal.color)}
+  </div>
+  <div style="font-size:0.85em; color:${appraisal.color}; font-weight:bold;">
+    ${appraisal.label} IV (${poke.ivs.attack + poke.ivs.defense + poke.ivs.stamina}/45)
+  </div>
+</div>
 
 
 <div style="display:flex; gap:12px; font-size:0.9em; margin-bottom:6px;">
@@ -248,17 +248,31 @@ const renderBaseIV = (label, value, color) => `
     hideTooltip();
   });
 
-  // --- POSITION ---
-  const rect = target.getBoundingClientRect();
-  let top = rect.bottom + window.scrollY + 6;
+// --- POSITION ---
+const rect = target.getBoundingClientRect();
+const margin = 6;
+
+// Unahin i-display ang tooltip para makuha ang tamang offsetHeight
+partyTooltip.style.display = "block";
+partyTooltip.style.opacity = 0;
+
+// Small timeout para ma-render muna
+setTimeout(() => {
+  let top = rect.top + window.scrollY - partyTooltip.offsetHeight - margin;
   let left = rect.left + window.scrollX;
+
   if (left + partyTooltip.offsetWidth > window.innerWidth - 10) {
     left = window.innerWidth - partyTooltip.offsetWidth - 10;
   }
+
   partyTooltip.style.top = `${top}px`;
   partyTooltip.style.left = `${left}px`;
   partyTooltip.style.opacity = 1;
-  partyTooltip.style.display = "block";
+}, 0);
+
+
+
+
 }
 
 function hideTooltip() {
@@ -276,7 +290,40 @@ function attachTooltip(iconElement, poke) {
 }
 
 
+function attachTooltip(iconElement, poke) {
+  let isTooltipVisible = false;
 
+  const show = () => {
+    showTooltip(poke, iconElement);
+    isTooltipVisible = true;
+  };
+
+  const hide = () => {
+    hideTooltip();
+    isTooltipVisible = false;
+  };
+
+  // --- Toggle tooltip on click ---
+  iconElement.addEventListener("click", (e) => {
+    e.stopPropagation(); // para hindi ma-close agad
+    if (isTooltipVisible) {
+      hide();
+    } else {
+      show();
+    }
+  });
+
+  // --- Hide tooltip if click outside ---
+  document.addEventListener("click", (e) => {
+    if (!iconElement.contains(e.target) && partyTooltip && !partyTooltip.contains(e.target)) {
+      hide();
+    }
+  });
+
+  // --- Optional: hover for desktop ---
+  iconElement.addEventListener("mouseenter", show);
+  iconElement.addEventListener("mouseleave", hide);
+}
 
 
 // ------------------ PLAYER PARTY DISPLAY ------------------
@@ -470,7 +517,6 @@ async function catchPokemon(ballType = "pokeball", onComplete = null) {
   isCatching = false;
   if (onComplete) onComplete();
 }
-
 
 
 

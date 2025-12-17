@@ -428,3 +428,19 @@ body.dark-mode .region-btn.selected, body.dark-mode .route-btn.selected { backgr
   50%  { transform: var(--ball-transform) scale(1.2); filter: drop-shadow(0 0 20px gold) brightness(1.8); }
   100% { transform: var(--ball-transform) scale(1); filter: drop-shadow(0 0 0px gold) brightness(1); }
 }
+
+
+/* ================= UI BUTTONS ================= */
+#viewToggleBtn, #menuToggleBtn {
+  position: fixed;
+  z-index: 1100;
+  padding: 6px 12px;
+  font-size: 12px;
+  background: #ffcb05;
+  color: #000;
+  border:2px solid #333;
+  border-radius:6px;
+  cursor: pointer;
+  box-shadow: 2px 2px 0 #555;
+}
+#viewToggleBtn { top:12px; right:12px; }

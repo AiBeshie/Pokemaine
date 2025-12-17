@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Mini Pokémon RPG — Mobile</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+<style>
+/* ================= GLOBAL ================= */
+html, body {
+  margin:0;
+  padding:0;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  background:#000;
+  font-family:'Press Start 2P', monospace;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+
+/* ================= UI BUTTONS ================= */
+#viewToggleBtn, #menuToggleBtn {
+  position: fixed;
+  z-index: 1100;
+  padding: 6px 12px;
+  font-size: 12px;
+  background: #ffcb05;
+  color: #000;
+  border:2px solid #333;
+  border-radius:6px;
+  cursor: pointer;
+  box-shadow: 2px 2px 0 #555;
+}
+#viewToggleBtn { top:12px; right:12px; }
+#menuToggleBtn { top:12px; left:12px; }
+
+/* ================= GBA SCREEN ================= */
+#gbaScreen {
+  width:100%;
+  max-width:480px;
+  height:100%;
+  background:#7ec0ee;
+  display:flex;
+  flex-direction:column;
+  position:relative;
+  padding:4px;
+  box-sizing:border-box;
+}
+.gba-shell {
+  width:100%;
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-start;
+  gap:4px;
+}
+
+/* ============Battle container bigger=========== */
+.battle-container {
+  flex:0.850; /* increase from 0.5 */
+  position:relative;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:#c0d8ef;
+  border:4px solid #333;
+  border-radius:8px;
+  box-shadow: 4px 4px 0 #555;
+  padding:4px;
+  box-sizing:border-box;
+}
+
+/* Enemy & Player positioning */
+.enemy-container, .player-container {
+  position:absolute;
+}
+.enemy-container { top:0; left:0; width:100%; height:50%; }
+.player-container { bottom:0; left:0; width:100%; height:50%; }
+
+.enemy-sprite, .player-sprite {
+  width:100px; height:100px;
+  object-fit:contain;
+  position:absolute;
+}
+.enemy-sprite {
+  top: 20%; /* adjust vertical placement */
+  left: 80%; /* horizontal center */
+  transform: translateX(-50%);
+  width: 25%; /* relative sa container, scalable */
+  height: auto;
+}
+.player-sprite {
+  bottom: 10%;
+  left: 20%;
+  transform: translateX(-50%);
+  width: 25%;
+  height: auto;
+}
+
+
+.hp-box {
+  background:#eee;
+  padding:4px;
+  width:200px;
+  box-sizing:border-box;
+  border:2px solid #333;
+  border-radius:4px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  position:absolute;
+}
+.enemy-hp-box { top:0; left:0; }
+.player-hp-box { bottom:0; right:0; }
+
+.bars-row {
+  display:flex;
+  flex-direction: column;
+  gap:2px;
+  width:100%;
+}
+.hp-bar-outer {
+  background:#ccc;
+  width:100%;
+  height:10px;
+  border:1px solid #333;
+  border-radius:2px;
+  overflow:hidden;
+}
+.hp-bar-inner {
+  height:100%;
+  width:100%;
+}
+.hp-green { background:#0f0; }
+.hp-blue { background:#00f; }
+.hp-text { font-size:10px; margin-top:2px; text-align:center; }
+
+/* ================= MESSAGE BOX ================= */
+.message-box {
+  height:24%;
+  width:98%;
+  background:#f5f5f5;
+  border:2px solid #333;
+  border-radius:4px;
+  padding:4px;
+  font-size:12px;
+  display:flex;
+  flex-direction: column; /* normal stacking */
+  justify-content: flex-end; /* simula sa ibaba */
+  box-shadow:2px 2px 0 #555;
+  overflow-y:auto;
+  text-align:left;
+  gap:2px;
+}
+
+
+/* ================= MOVES BOX ================= */
+.moves-box {
+  height:30%;
+  width:100%;
+  background:#f0f0f0;
+  border:2px solid #333;
+  border-radius:4px;
+  padding:4px;
+  box-sizing:border-box;
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-start;
+  gap:4px;
+  box-shadow:2px 2px 0 #555;
+}
+
+.move-buttons {
+  display:flex;
+  justify-content:space-between;
+  gap:4px;
+}
+
+.move-buttons button {
+  flex:1;
+  margin:0;
+  padding:12px 0;  /* bigger buttons for mobile */
+  font-size:16px;  /* bigger text */
+  background:#ffcb05;
+  border:2px solid #333;
+  border-radius:6px;
+  cursor:pointer;
+  box-shadow:2px 2px 0 #555;
+}
+.move-buttons button:hover { background:#ffd34d; }
+
+
+<script>
+// ================= MESSAGE BOX UPDATE =================
+function updateBattleMessage(msg) {
+  const box = document.getElementById('battleMessage');
+  const p = document.createElement('p');
+  p.textContent = msg;
+  box.appendChild(p);
+  box.scrollTop = box.scrollHeight; // always scroll to bottom
+}
+/* ================= MENU OVERLAY ================= */
+#menuOverlay {
+  position: fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background: rgba(0,0,0,0.6);
+  z-index:1000;
+  display:none;
+  overflow-y:auto;
+}
+.menu-content {
+  margin:5% auto;
+  width:90%;
+  max-width:400px;
+  background:#c0c0c0;
+  border:4px solid #333;
+  padding:10px;
+  border-radius:5px;
+  box-shadow: 2px 2px 0 #555;
+  color:#000;
+}
+.menu-section { margin-bottom:10px; border-bottom:2px solid #333; padding-bottom:5px; }
+.menu-section h3 { margin:0 0 5px 0; font-size:12px; }
+
+/* ================= DARK MODE ================= */
+body.dark-mode { background:#222; }
+body.dark-mode #gbaScreen { background:#555; }
+body.dark-mode .menu-content { background:#555; color:#fff; border-color:#aaa; }
+</style>
+</head>
+<body>
+
+<!-- ================= BUTTONS ================= -->
+<button id="viewToggleBtn">🔙 Back to PC View</button>
+<button id="menuToggleBtn">☰ Menu</button>
+
+<!-- ================= MENU OVERLAY ================= -->
+<div id="menuOverlay">
+  <div class="menu-content">
+    <div class="menu-section">
+      <h3>Map</h3>
+      <div id="regionButtons"></div>
+      <div id="mapButtons"></div>
+    </div>
+   
+    <div class="menu-section">
+      <h3>Shop</h3>
+      <div id="shopItems">Shop items go here</div>
+      <p id="playerCoins">Coins: 50</p>
+    </div>
+    <div class="menu-section">
+      <h3>Storage</h3>
+      <div id="storageDisplay">No Pokémon in storage.</div>
+    </div>
+    <div class="menu-section">
+      <h3>Player</h3>
+      <div id="playerDisplay">Lv: 5 | EXP: 0 | Coins: 100</div>
+      <button onclick="healAllPokemon()">Heal All</button>
+      <button onclick="saveGame()">Save</button>
+      <button onclick="loadGame()">Load</button>
+      <button onclick="clearSave()">Clear Save</button>
+      <button onclick="toggleDarkMode()">🌓 Dark Mode</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= GBA SCREEN ================= -->
+<div id="gbaScreen">
+  <div class="gba-shell">
+
+    <!-- Battle -->
+    <div class="battle-container">
+      <!-- Enemy -->
+      <div class="enemy-container">
+        <img id="wildSprite" class="pokemon-sprite enemy-sprite">
+        <div class="hp-box enemy-hp-box">
+          <div class="name-level">
+            <span id="wildName">—</span> Lv:<span id="wildLevel">0</span>
+            <span id="wildCP">• CP 0</span>
+          </div>
+          <div class="bars-row">
+            <div class="hp-bar-outer"><div id="enemyHPBar" class="hp-bar-inner hp-green"></div></div>
+            <div class="hp-bar-outer"><div id="enemyEnergyBar" class="hp-bar-inner hp-blue"></div></div>
+          </div>
+          <div class="hp-text"><span id="enemyHP">0</span>/<span id="enemyHPMax">0</span></div>
+        </div>
+      </div>
+
+      <!-- Player -->
+      <div class="player-container">
+        <img id="playerSprite" class="pokemon-sprite player-sprite">
+<img id="pokeballThrow" src="img/greatball.png" 
+     style="position:absolute; left:-50%; top:70%; width:40px; height:40px; 
+            transform:translateX(-50%) translateY(0); display:none;"
+     alt="Pokéball">
+        <div class="hp-box player-hp-box">
+          <div class="name-level">
+            <span id="activeName">—</span> Lv:<span id="activeLevel">0</span>
+            <span id="playerCP">• CP 0</span>
+          </div>
+          <div class="bars-row">
+            <div class="hp-bar-outer"><div id="playerHPBar" class="hp-bar-inner hp-green"></div></div>
+            <div class="hp-bar-outer"><div id="playerEnergyBar" class="hp-bar-inner hp-blue"></div></div>
+          </div>
+          <div class="hp-text"><span id="playerHP">0</span>/<span id="playerHPMax">0</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Message box -->
+    <div class="message-box" id="battleMessage">Welcome to Pokémon!</div>
+
+    <!-- Moves -->
+    <div class="moves-box">
+      <p>Current Route: <span id="currentRoute">None</span></p>
+ <div id="partyDisplay"></div>
+      <div class="move-buttons">
+        <button onclick="encounterWild()">Search Wild</button>
+        <button onclick="playerTurn('flee')">Flee</button>
+      </div>
+
+      <div class="move-buttons">
+        <button id="move0" onclick="playerTurn('attack',{moveIndex:0})">—</button>
+        <button id="move1" onclick="playerTurn('attack',{moveIndex:1})">—</button>
+        <button id="move2" onclick="playerTurn('attack',{moveIndex:2})">—</button>
+        <button id="move3" onclick="playerTurn('attack',{moveIndex:3})">—</button>
+      </div>
+       <p id="itemsDisplay"></p>
+    </div>
+
+
+   
+
+  </div>
+ 
+
+</div>
+
+<script>
+document.getElementById('viewToggleBtn').onclick = () => window.location.href='index.html';
+const menuBtn = document.getElementById('menuToggleBtn');
+const menuOverlay = document.getElementById('menuOverlay');
+menuBtn.onclick = () => menuOverlay.style.display = menuOverlay.style.display==='block'?'none':'block';
+menuOverlay.onclick = e => { if(e.target===menuOverlay) menuOverlay.style.display='none'; };
+
+function toggleDarkMode() {
+  document.body.classList.toggle('dark-mode');
+  localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+}
+window.addEventListener('DOMContentLoaded', () => {
+  if(localStorage.getItem('darkMode')==='true') document.body.classList.add('dark-mode');
+});
+
+function updateBattleMessage(msg) {
+  const box = document.getElementById('battleMessage');
+  box.textContent = msg;
+}
+function setHP(pokemon, value, max) {
+  const bar = document.getElementById(pokemon+'HPBar');
+  const hpPercent = Math.max(0, Math.min(100, (value/max)*100));
+  bar.style.width = hpPercent+'%';
+  document.getElementById(pokemon+'HP').textContent = value;
+  document.getElementById(pokemon+'HPMax').textContent = max;
+}
+function setEnergy(pokemon, value, max) {
+  const bar = document.getElementById(pokemon+'EnergyBar');
+  const energyPercent = Math.max(0, Math.min(100, (value/max)*100));
+  bar.style.width = energyPercent+'%';
+}
+</script>
+
+<script src="data/movesdb.js"></script>
+<script src="data/pokemondb.js"></script>
+<script src="data/pokemonImages.js"></script>
+<script src="data/routes.js"></script>
+<script src="js/game.js"></script>
+<script src="js/battle.js"></script>
+<script src="js/journey.js"></script>
+<script src="js/player.js"></script>
+<script src="js/item.js"></script>
+<script src="util/settings.js"></script>
+
+</body>
+</html>

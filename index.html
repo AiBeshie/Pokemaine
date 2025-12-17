@@ -7,6 +7,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 </head>
 <body>
+<!-- Replace your current button -->
+<button id="viewToggleBtn" class="view-toggle-btn" onclick="goMobile()">📱 Toggle Mobile</button>
+
+
 
 <header>
   <h4>Mini Pokémon RPG — v1.2</h4>
@@ -133,7 +137,6 @@
 
 
 
-
  </section>   
   <!-- PLAYER PANEL -->
   <section class="panel" id="playerPanel" style="flex:1">
@@ -152,10 +155,9 @@
     <button onclick="saveGame()">Save</button>
     <button onclick="loadGame()">Load</button>
     <button onclick="clearSave()">Clear Save</button>
-
-    <div style="text-align:center;margin:6px 0;">
-      <button onclick="toggleDarkMode()">🌓 Dark Mode</button>
-    </div>
+ <button onclick="toggleDarkMode()">🌓 Dark Mode</button>
+  
+    
   </section>
 
 </div>
@@ -177,8 +179,26 @@
     if (localStorage.getItem('darkMode') === 'true')
       document.body.classList.add('dark-mode');
   });
-</script>
 
+
+</script>
+<script>
+  function goMobile() {
+    // Navigate to the mobile version
+    window.location.href = 'index-m.html';
+  }
+
+  // Optional: Dark mode still works per page
+  function toggleDarkMode() {
+    document.body.classList.toggle('dark-mode');
+    localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+  }
+
+  window.addEventListener('DOMContentLoaded', () => {
+    if (localStorage.getItem('darkMode') === 'true')
+      document.body.classList.add('dark-mode');
+  });
+</script>
 <!-- YOUR OTHER SCRIPTS -->
 <script src="data/movesdb.js"></script>
 <script src="data/pokemondb.js"></script>
