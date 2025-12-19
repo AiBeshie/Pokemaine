@@ -1,211 +1,410 @@
+
 // ------------------ PLAYER INIT ------------------
-if (!window.player) {
-  window.player = {
-    level: 1,
-    exp: 0,
-    coins: 50,
-    stardust: 500,
-    party: [],
-    items: {},
-    activeIndex: 0
-  };
-} else if (window.player.activeIndex == null || window.player.activeIndex >= window.player.party.length) {
-  window.player.activeIndex = 0;
+function initPlayer() {
+  if (!window.player) {
+    window.player = {
+      level: 1,
+      exp: 0,
+      coins: 50,
+      stardust: 500,
+      party: [],       // start empty
+      items: {},
+      activeIndex: 0
+    };
+  } else if (window.player.activeIndex == null || window.player.activeIndex >= window.player.party.length) {
+    window.player.activeIndex = 0;
+  }
+
+  // Only initialize Pokémon stats if party exists
+  if (window.player.party.length) {
+    window.player.party.forEach(poke => {
+      poke.exp = poke.exp || 0;
+      poke.expToNext = getPokemonExpToNext(poke.level || 1);
+      ensureBattleStats(poke);
+    });
+  }
 }
 
-// Initialize Pokémon EXP for party
-if (window.player.party) {
-  window.player.party.forEach(poke => {
-    poke.exp = poke.exp || 0;
-    poke.expToNext = getPokemonExpToNext(poke.level || 1);
-  });
-}
 
 // ------------------ EXP FUNCTIONS ------------------
 function expToLevel(level) {
-  return 20 + level * level * 5; // quadratic growth
+  return 5 + level * level * 5; // quadratic growth
 }
 
 function getPokemonExpToNext(level) {
   return expToLevel(level);
 }
 
-// ------------------ HELPER: CLEAR SPRITE ------------------
-function clearSprite(isPlayer, name = "") {
-  const spriteImg = isPlayer ? document.getElementById("playerSprite") : document.getElementById("wildSprite");
-  if (!spriteImg) return;
+// ------------------ ENSURE BATTLE STATS ------------------
+function ensureBattleStats(pokemon) {
+  if (!pokemon.staTotal) applyTalentModifiers(pokemon);
 
-  spriteImg.src = "";
-  spriteImg.alt = name;
-  spriteImg.className = "";
+  if (pokemon.maxHP == null) pokemon.maxHP = Math.floor(pokemon.staTotal * 2);
+  if (pokemon.currentHP == null) pokemon.currentHP = pokemon.maxHP;
 
-  const nameEl = isPlayer ? document.getElementById("activeName") : document.getElementById("wildName");
-  const levelEl = isPlayer ? document.getElementById("activeLevel") : document.getElementById("wildLevel");
-  const hpEl = isPlayer ? document.getElementById("playerHP") : document.getElementById("enemyHP");
-  const hpMaxEl = isPlayer ? document.getElementById("playerHPMax") : document.getElementById("enemyHPMax");
-  const cpEl = isPlayer ? document.getElementById("playerCP") : document.getElementById("wildCP");
-  const hpBarInner = isPlayer ? document.getElementById("playerHPBar") : document.getElementById("enemyHPBar");
-  const energyBar = isPlayer ? document.getElementById("playerEnergyBar") : document.getElementById("enemyEnergyBar");
-  const energyText = isPlayer ? document.getElementById("playerEnergy") : document.getElementById("enemyEnergy");
-  const maxEnergyText = isPlayer ? document.getElementById("playerMaxEnergy") : document.getElementById("enemyMaxEnergy");
+  if (pokemon.max_energy == null) pokemon.max_energy = 100;
+  if (pokemon.currentEnergy == null) pokemon.currentEnergy = 0;
 
-  if (nameEl) nameEl.textContent = name;
-  if (levelEl) levelEl.textContent = "";
-  if (hpEl) hpEl.textContent = "";
-  if (hpMaxEl) hpMaxEl.textContent = "";
-  if (cpEl) cpEl.textContent = "";
-  if (hpBarInner) {
-    hpBarInner.style.width = "0%";
-    hpBarInner.className = "hp-bar-inner hp-red";
-  }
-  if (energyBar) energyBar.style.width = "0%";
-  if (energyText) energyText.textContent = "";
-  if (maxEnergyText) maxEnergyText.textContent = "";
+  if (pokemon.current_cp == null) calculateCP(pokemon);
 }
 
-// ------------------ UPDATE BATTLE SCREEN ------------------
+// ------------------ SAFE BATTLE SCREEN ------------------
 function updateBattleScreen(pokemon, isPlayer = true) {
-  if (!pokemon) {
+  const hasPokemon = !!pokemon;
+
+  const spriteImg = document.getElementById(isPlayer ? "playerSprite" : "wildSprite");
+  const nameEl = document.getElementById(isPlayer ? "activeName" : "wildName");
+  const levelEl = document.getElementById(isPlayer ? "activeLevel" : "wildLevel");
+  const cpEl = document.getElementById(isPlayer ? "playerCP" : "wildCP");
+  const energyBar = document.getElementById(isPlayer ? "playerEnergyBar" : "enemyEnergyBar");
+
+  // If no Pokémon, clear screen safely
+  if (!hasPokemon) {
     clearSprite(isPlayer, isPlayer ? "No Pokémon" : "No Wild Pokémon");
+
+    // Disable player moves if player has no Pokémon
+    if (isPlayer) {
+      for (let i = 0; i < 4; i++) {
+        const btn = document.getElementById(`move${i}`);
+        if (btn) {
+          btn.textContent = "—";
+          btn.disabled = true;
+        }
+      }
+    }
     return;
   }
 
-  const spriteImg = isPlayer ? document.getElementById("playerSprite") : document.getElementById("wildSprite");
-  const nameEl = isPlayer ? document.getElementById("activeName") : document.getElementById("wildName");
-  const levelEl = isPlayer ? document.getElementById("activeLevel") : document.getElementById("wildLevel");
-  const hpEl = isPlayer ? document.getElementById("playerHP") : document.getElementById("enemyHP");
-  const hpMaxEl = isPlayer ? document.getElementById("playerHPMax") : document.getElementById("enemyHPMax");
-  const cpEl = isPlayer ? document.getElementById("playerCP") : document.getElementById("wildCP");
-  const hpBarInner = isPlayer ? document.getElementById("playerHPBar") : document.getElementById("enemyHPBar");
-  const energyBar = isPlayer ? document.getElementById("playerEnergyBar") : document.getElementById("enemyEnergyBar");
-  const energyText = isPlayer ? document.getElementById("playerEnergy") : document.getElementById("enemyEnergy");
-  const maxEnergyText = isPlayer ? document.getElementById("playerMaxEnergy") : document.getElementById("enemyMaxEnergy");
+  ensureBattleStats(pokemon);
 
-  if (!pokemon.max_cp || pokemon.max_cp <= 0) calculateCP(pokemon);
+  if (isPlayer) resetPlayerSpritePosition();
+  else resetWildSpritePosition();
 
-  const maxHP = pokemon.maxHP || Math.max(1, pokemon.staTotal || 10);
-  const currentHP = Math.max(0, pokemon.currentHP ?? maxHP);
+  // -------- HP BAR & LABEL --------
+  updateHPBar(isPlayer, pokemon.currentHP, pokemon.maxHP);
 
-  // HP bar
-  if (hpBarInner) {
-    const pct = (currentHP / maxHP) * 100;
-    hpBarInner.style.width = pct + "%";
-    hpBarInner.className = "hp-bar-inner " + (pct > 50 ? "hp-green" : pct > 20 ? "hp-yellow" : "hp-red");
-  }
-  if (hpEl) hpEl.textContent = currentHP;
-  if (hpMaxEl) hpMaxEl.textContent = maxHP;
-
-  // Energy bar
-  if (energyBar && energyText && maxEnergyText) {
-    const pctEnergy = ((pokemon.currentEnergy || 0) / (pokemon.max_energy || 100)) * 100;
+  // -------- ENERGY BAR --------
+  const maxEnergy = pokemon.max_energy || 100;
+  const currentEnergy = Math.max(0, Math.min(pokemon.currentEnergy, maxEnergy));
+  const pctEnergy = (currentEnergy / maxEnergy) * 100;
+  if (energyBar) {
     energyBar.style.width = pctEnergy + "%";
-    energyText.textContent = pokemon.currentEnergy || 0;
-    maxEnergyText.textContent = pokemon.max_energy || 100;
+    energyBar.textContent = "";
   }
 
-  // Sprite
+  // -------- SPRITE --------
   if (spriteImg) {
     spriteImg.src = getPokemonSprite(pokemon.pokemon_id, pokemon.shiny);
-    spriteImg.alt = pokemon.pokemon_name;
-    spriteImg.classList.remove("shiny", "glow", "starburst", "fainted", "fainted-animate");
-    if (pokemon.shiny && currentHP > 0) spriteImg.classList.add("shiny", "glow", "starburst");
-    if (currentHP <= 0) spriteImg.classList.add("fainted", "fainted-animate");
+    spriteImg.className = "";
+    if (pokemon.shiny && pokemon.currentHP > 0) spriteImg.classList.add("shiny", "glow", "starburst");
+    if (pokemon.currentHP <= 0) spriteImg.classList.add("fainted", "fainted-animate");
   }
 
+  // -------- NAME, LEVEL, CP --------
   if (nameEl) nameEl.textContent = pokemon.shiny ? `✨ ${pokemon.pokemon_name}` : pokemon.pokemon_name;
-  if (levelEl) levelEl.textContent = `Lv ${pokemon.level || 1}`;
-  if (cpEl) cpEl.textContent = `CP ${pokemon.current_cp || 0}`;
+  if (levelEl) levelEl.textContent = pokemon.level || 1;
+  if (cpEl) cpEl.textContent = `CP: ${pokemon.current_cp || 0}`;
 
-  // Player moves
+  // -------- PLAYER MOVES --------
   if (isPlayer) {
     const allMoves = [...(pokemon.fast_moves || []), ...(pokemon.charged_moves || [])];
     for (let i = 0; i < 4; i++) {
       const btn = document.getElementById(`move${i}`);
       if (!btn) continue;
 
-      if (!allMoves[i]) {
+      const moveName = allMoves[i];
+      if (!moveName) {
         btn.textContent = "—";
         btn.disabled = true;
         continue;
       }
 
-      const moveData = window.movesDB.find(m => m.name === allMoves[i]);
+      const moveData = window.movesDB.find(m => m.name === moveName);
       if (moveData) {
         btn.textContent = moveData.category === "Fast"
           ? `${moveData.name} (+${moveData.energyGain})`
           : `${moveData.name} (-${moveData.energy})`;
-        btn.disabled = (moveData.category === "Charge" && (pokemon.currentEnergy || 0) < moveData.energy) || currentHP <= 0;
+        btn.disabled = (moveData.category === "Charge" && currentEnergy < moveData.energy) || pokemon.currentHP <= 0;
       } else {
-        btn.textContent = allMoves[i];
-        btn.disabled = currentHP <= 0;
+        btn.textContent = moveName;
+        btn.disabled = pokemon.currentHP <= 0;
       }
     }
   }
 }
 
-// ------------------ PLAYER & WILD TURN ------------------
-// Wild encounter
-function encounterWild() {
-  resetWildSpritePosition(); 
-  const player = window.player.party[window.player.activeIndex];
-  if (!player) return;
-  const route = window.currentRoute;
-  if (!route || !route.wildPokemon?.length) return;
 
-  let rand = Math.random();
-  let chosen = route.wildPokemon[0];
-  for (let i = 0; i < route.wildPokemon.length; i++) {
-    if (rand < route.wildPokemon[i].rate) {
-      chosen = route.wildPokemon[i];
-      break;
-    }
-    rand -= route.wildPokemon[i].rate;
+// ------------------ SYNC HP ------------------
+function syncCurrentHP(pokemon) {
+  const playerHPBar = document.getElementById("playerHPBar");
+  const enemyHPBar = document.getElementById("enemyHPBar");
+  const playerHPText = document.getElementById("playerHP");
+  const playerHPMax = document.getElementById("playerHPMax");
+  const enemyHPText = document.getElementById("enemyHP");
+  const enemyHPMax = document.getElementById("enemyHPMax");
+
+  if (!pokemon) return;
+
+  const pctHP = Math.max(0.01, (pokemon.currentHP / pokemon.maxHP) * 100); // min 1% to show bar
+  if (pokemon.isPlayer && playerHPBar) {
+    playerHPBar.style.width = pctHP + "%";
+    playerHPBar.className = "hp-bar-inner " + (pctHP > 50 ? "hp-green" : pctHP > 20 ? "hp-yellow" : "hp-red");
+    if (playerHPText) playerHPText.textContent = pokemon.currentHP;
+    if (playerHPMax) playerHPMax.textContent = pokemon.maxHP;
+  } else if (!pokemon.isPlayer && enemyHPBar) {
+    enemyHPBar.style.width = pctHP + "%";
+    enemyHPBar.className = "hp-bar-inner " + (pctHP > 50 ? "hp-green" : pctHP > 20 ? "hp-yellow" : "hp-red");
+    if (enemyHPText) enemyHPText.textContent = pokemon.currentHP;
+    if (enemyHPMax) enemyHPMax.textContent = pokemon.maxHP;
   }
+}
 
-  const base = window.pokemonDB.find(p => p.pokemon_name === chosen.name);
-  if (!base) return;
+// ------------------ CLEAR SPRITE ------------------
+function clearSprite(isPlayer, name = "") {
+  const spriteImg = document.getElementById(isPlayer ? "playerSprite" : "wildSprite");
+  if (!spriteImg) return;
 
-  const [lvlMin, lvlMax] = route.levelRange || [1, 1];
-  const level = Math.floor(Math.random() * (lvlMax - lvlMin + 1)) + lvlMin;
-  const ivs = generateIVs();
-  const isShiny = Math.random() < 0.05;
+  spriteImg.src = "";
+  spriteImg.alt = "";
+  spriteImg.className = "";
 
-  const wild = {
-    ...base,
-    level,
-    ivs,
-    currentEnergy: 0,
-    max_energy: 100,
-    fast_moves: base.fast_moves || [],
-    charged_moves: base.charged_moves || [],
-    shiny: isShiny,
-    talents: [],
+  const elements = {
+    nameEl: document.getElementById(isPlayer ? "activeName" : "wildName"),
+    levelEl: document.getElementById(isPlayer ? "activeLevel" : "wildLevel"),
+    hpEl: document.getElementById(isPlayer ? "playerHP" : "enemyHP"),
+    hpMaxEl: document.getElementById(isPlayer ? "playerHPMax" : "enemyHPMax"),
+    cpEl: document.getElementById(isPlayer ? "playerCP" : "wildCP"),
+    hpBarInner: document.getElementById(isPlayer ? "playerHPBar" : "enemyHPBar"),
+    energyBar: document.getElementById(isPlayer ? "playerEnergyBar" : "enemyEnergyBar"),
+    energyText: document.getElementById(isPlayer ? "playerEnergy" : "enemyEnergy"),
+    maxEnergyText: document.getElementById(isPlayer ? "playerMaxEnergy" : "enemyMaxEnergy")
   };
 
-  assignTalents(wild);
-  applyTalentModifiers(wild);
-
-  wild.maxHP = Math.floor(wild.staTotal * 2);
-  wild.currentHP = wild.maxHP;
-
-  calculateCP(wild);
-  wild.exp = wild.exp || 0;
-  wild.expToNext = getPokemonExpToNext(wild.level);
-
-  window.currentWild = wild;
-
-  updateBattleScreen(player, true);
-  updateBattleScreen(wild, false);
-  renderParty();
-  appendBattleLog(`A wild ${isShiny ? "✨ " : ""}${wild.pokemon_name} appeared!`);
+  if (elements.nameEl) elements.nameEl.textContent = name;
+  if (elements.levelEl) elements.levelEl.textContent = "";
+  if (elements.hpEl) elements.hpEl.textContent = "";
+  if (elements.hpMaxEl) elements.hpMaxEl.textContent = "";
+  if (elements.cpEl) elements.cpEl.textContent = "";
+  if (elements.hpBarInner) {
+    elements.hpBarInner.style.width = "0%";
+    elements.hpBarInner.className = "hp-bar-inner hp-red";
+  }
+  if (elements.energyBar) elements.energyBar.style.width = "0%";
+  if (elements.energyText) elements.energyText.textContent = "";
+  if (elements.maxEnergyText) elements.maxEnergyText.textContent = "";
 }
-// Player action
+
+// ================= HP BAR UPDATE =================
+function updateHPBar(isPlayer, currentHP, maxHP) {
+  const hpBar = document.getElementById(isPlayer ? "playerHPBar" : "enemyHPBar");
+  const hpText = document.getElementById(isPlayer ? "playerHP" : "enemyHP");
+  const hpMaxText = document.getElementById(isPlayer ? "playerHPMax" : "enemyHPMax");
+
+  if (!hpBar || !hpText || !hpMaxText) return;
+
+  const pct = Math.max(0, Math.min(1, currentHP / maxHP)) * 100;
+  hpBar.style.width = pct + "%";
+
+  // Color based on HP %
+  if (pct > 50) hpBar.className = "hp-bar-inner hp-green";
+  else if (pct > 20) hpBar.className = "hp-bar-inner hp-yellow";
+  else hpBar.className = "hp-bar-inner hp-red";
+
+  // Update labels outside the bar
+  hpText.textContent = currentHP;
+  hpMaxText.textContent = maxHP;
+}
+
+
+
+function encounterWild() {
+    resetWildSpritePosition();
+
+    const route = window.currentRoute;
+    if (!route || !route.wildPokemon?.length) {
+        appendBattleLog("No wild Pokémon found on this route.", "system");
+        return;
+    }
+
+    // Random wild Pokémon based on rate
+    let rand = Math.random();
+    let chosen = route.wildPokemon[0];
+    for (let i = 0; i < route.wildPokemon.length; i++) {
+        if (rand < route.wildPokemon[i].rate) {
+            chosen = route.wildPokemon[i];
+            break;
+        }
+        rand -= route.wildPokemon[i].rate;
+    }
+
+    // Match name case-insensitive to pokemonDB
+    const base = window.pokemonDB.find(p =>
+        p.pokemon_name.toLowerCase().trim() === chosen.name.toLowerCase().trim()
+    );
+    if (!base) return;
+
+    const [lvlMin, lvlMax] = route.levelRange || [1, 1];
+    const level = Math.floor(Math.random() * (lvlMax - lvlMin + 1)) + lvlMin;
+
+    const ivs = generateIVs();
+    const isShiny = Math.random() < 0.5;
+
+    const wild = {
+        ...base,
+        level,
+        ivs,
+        currentEnergy: 0,
+        max_energy: 100,
+        fast_moves: base.fast_moves || [],
+        charged_moves: base.charged_moves || [],
+        shiny: isShiny,
+        talents: [],
+        disguiseName: base.pokemon_name, // default for display
+    };
+
+    assignTalents(wild);
+    applyTalentModifiers(wild);
+    wild.maxHP = Math.floor(wild.staTotal * 2);
+    wild.currentHP = wild.maxHP;
+    calculateCP(wild);
+
+    wild.exp = wild.exp || 0;
+    wild.expToNext = getPokemonExpToNext(wild.level);
+
+    applyDittoDisguise(wild);
+
+    // Update displayName if Ditto disguised
+    const displayName = wild.isDitto ? wild.disguisedAs : wild.pokemon_name;
+    wild.disguiseName = displayName;
+
+    window.currentWild = wild;
+
+    // -------- UPDATE BATTLE SCREEN --------
+    const activePlayer = window.player.party[window.player.activeIndex] || null;
+    updateBattleScreen(activePlayer, true); // player
+    updateBattleScreen(wild, false); // wild Pokémon
+
+    // Update the name span explicitly
+    const wildNameEl = document.getElementById("wildName");
+    if (wildNameEl) wildNameEl.textContent = displayName;
+
+    const shinyMark = wild.shiny ? "✨ " : "";
+    appendBattleLog(`A wild ${shinyMark}${displayName} appeared! (Lv ${wild.level})`);
+
+    // ⚠ Warn if no Pokémon
+    if (!window.player.party.length) {
+        appendBattleLog("You have no Pokémon! Go to your party and summon one.", "system");
+    } else if (!window.player.party[window.player.activeIndex]) {
+        appendBattleLog("Select a Pokémon to send out!", "system");
+    }
+}
+
+
+
+
+// ------------------ ANIMATE ATTACK ------------------
+function animateAttack(attackerId, targetId, move, callback) {
+  if (attackInProgress) return;
+  attackInProgress = true;
+
+  const attacker = document.getElementById(attackerId);
+  const target = document.getElementById(targetId);
+  const gbaScreen = document.getElementById("gbaScreen");
+  if (!attacker || !target || !gbaScreen) {
+    attackInProgress = false;
+    if (callback) callback();
+    return;
+  }
+
+  const deltaX = target.offsetLeft - attacker.offsetLeft;
+  const deltaY = target.offsetTop - attacker.offsetTop;
+
+  try {
+    if (move.category === "Fast") {
+      const moveX = deltaX * 0.3;
+      const moveY = deltaY * 0.3;
+      const duration = 200;
+
+      attacker.style.transition = `transform ${duration/1000}s ease-out`;
+      attacker.style.transform = `translate(${moveX}px, ${moveY}px)`;
+
+      setTimeout(() => {
+        attacker.style.transform = `translate(0,0)`;
+        target.classList.add("hit-shake");
+        setTimeout(() => target.classList.remove("hit-shake"), 200);
+
+        attackInProgress = false;
+        if (callback) callback();
+      }, duration);
+      return;
+    }
+
+    // Charge attack
+    const trail = document.createElement("div");
+    trail.style.position = "absolute";
+    trail.style.width = "60px";
+    trail.style.height = "20px";
+    trail.style.background = "linear-gradient(90deg, rgba(255,255,0,0.8), rgba(255,0,0,0.8))";
+    trail.style.borderRadius = "10px";
+    trail.style.left = attacker.offsetLeft + attacker.offsetWidth / 2 + "px";
+    trail.style.top = attacker.offsetTop + attacker.offsetHeight / 2 - 10 + "px";
+    trail.style.pointerEvents = "none";
+    trail.style.zIndex = "999";
+    gbaScreen.appendChild(trail);
+
+    const duration = 500;
+
+    attacker.style.transition = `transform ${duration/1000}s ease-out`;
+    attacker.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(1.2)`;
+
+    trail.animate([
+      { transform: `translate(0px,0px) rotate(0deg)`, opacity: 1 },
+      { transform: `translate(${deltaX}px, ${deltaY}px) rotate(30deg)`, opacity: 0.7 }
+    ], { duration, easing: "ease-out" });
+
+    setTimeout(() => {
+      target.classList.add("hit-shake", "hit-flash");
+      setTimeout(() => {
+        target.classList.remove("hit-shake", "hit-flash");
+      }, 300);
+
+      gbaScreen.classList.add("screen-shake");
+      setTimeout(() => gbaScreen.classList.remove("screen-shake"), 300);
+
+      attacker.style.transform = `translate(0,0) scale(1)`;
+      trail.remove();
+
+      attackInProgress = false;
+      if (callback) callback();
+    }, duration);
+
+  } catch(e) {
+    console.error("Attack error:", e);
+    attackInProgress = false;
+    if (callback) callback();
+  }
+}
+
+
+
+
+// ==================== PLAYER TURN ====================
 function playerTurn(action, options = {}) {
   const active = window.player.party[window.player.activeIndex];
   const wild = window.currentWild;
-  if (!active) return;
 
-  if (action === "attack" && wild) {
+  // ✅ Check kung may active Pokémon
+  if (!active) {
+    appendBattleLog("No active Pokémon! Select one from your party first.", "system");
+    return;
+  }
+
+  if (!wild) {
+    appendBattleLog("No wild Pokémon to fight!", "system");
+    return;
+  }
+
+  if (action === "attack") {
     const allMoves = [...(active.fast_moves || []), ...(active.charged_moves || [])];
     const moveName = allMoves[options.moveIndex];
     if (!moveName) return;
@@ -214,52 +413,56 @@ function playerTurn(action, options = {}) {
     if (!move) return;
     if (move.category === "Charge" && (active.currentEnergy || 0) < move.energy) return;
 
-    const result = calculateDamage(active, wild, moveName);
-    wild.currentHP = Math.max(0, wild.currentHP - result.damage);
-    applyMoveEnergy(active, move);
+    animateAttack("playerSprite", "wildSprite", move, () => {
+      const result = calculateDamage(active, wild, moveName);
+      wild.currentHP = Math.max(0, wild.currentHP - result.damage);
+      applyMoveEnergy(active, move);
 
-    updateBattleScreen(active, true);
-    updateBattleScreen(wild, false);
-    appendBattleLog(`${active.pokemon_name} used ${moveName}! ${result.log}`, "player");
+      updateBattleScreen(active, true);
+      updateBattleScreen(wild, false);
+      appendBattleLog(`${active.pokemon_name} used ${moveName}! ${result.log}`, "player");
 
-    if (wild.currentHP <= 0) {
-      appendBattleLog(`${wild.pokemon_name} fainted!`, "player");
-      wild.currentEnergy = 0;
+      if (wild.currentHP <= 0) {
+        revealDitto(wild);
+        appendBattleLog(`${wild.pokemon_name} fainted!`, "player");
+        wild.currentEnergy = 0;
 
-      // --- LOOT & EXP ---
-      const baseExp = 10 + wild.level * 2;
-      const playerExp = Math.floor(baseExp * 0.5);
-      const pokemonExp = baseExp;
+        const baseExp = 10 + wild.level * 2;
+        const playerExp = Math.floor(baseExp * 0.5);
+        const pokemonExp = baseExp;
 
-      // Player EXP
-      window.player.exp = (window.player.exp || 0) + playerExp;
-      appendBattleLog(`You gained ${playerExp} EXP!`, "player");
-      checkPlayerLevelUp();
+        window.player.exp = (window.player.exp || 0) + playerExp;
+        appendBattleLog(`You gained ${playerExp} EXP!`, "player");
+        checkPlayerLevelUp();
+        levelUpPokemon(active, pokemonExp);
 
-      // Pokémon EXP
-      levelUpPokemon(active, pokemonExp);
+        const coins = Math.floor(Math.random() * 10 + 5);
+        window.player.coins += coins;
+        appendBattleLog(`You got ${coins} coins!`, "player");
 
-      // Coins loot
-      const coins = Math.floor(Math.random() * 10 + 5);
-      window.player.coins += coins;
-      appendBattleLog(`You got ${coins} coins!`, "player");
+        setTimeout(() => clearSprite(false, "No Wild Pokémon"), 900);
+        window.currentWild = null;
+        return;
+      }
 
-      setTimeout(() => clearSprite(false, "No Wild Pokémon"), 900);
-      window.currentWild = null;
-      return;
-    }
-
-    setTimeout(wildTurn, 500);
+      setTimeout(wildTurn, 500);
+    });
   }
+if (action === "flee") {
+  appendBattleLog(`You fled from the wild ${wild.pokemon_name}!`, "player");
 
-  if (action === "flee" && wild) {
-    appendBattleLog(`You fled from the wild ${wild.pokemon_name}!`, "player");
-    setTimeout(() => clearSprite(false, "No Wild Pokémon"), 300);
+
+
+  setTimeout(() => {
+    clearSprite(false, "No Wild Pokémon");
     window.currentWild = null;
-  }
+  }, 300);
 }
 
-// Wild action
+}
+
+
+// ==================== WILD TURN ====================
 function wildTurn() {
   const active = window.player.party[window.player.activeIndex];
   const wild = window.currentWild;
@@ -277,38 +480,43 @@ function wildTurn() {
   }
   if (!move) return;
 
-  const result = calculateDamage(wild, active, moveName);
-  active.currentHP = Math.max(0, active.currentHP - result.damage);
-  applyMoveEnergy(wild, move);
+  animateAttack("wildSprite", "playerSprite", move, () => {
+    const result = calculateDamage(wild, active, moveName);
+    active.currentHP = Math.max(0, active.currentHP - result.damage);
+    applyMoveEnergy(wild, move);
 
-  updateBattleScreen(active, true);
-  updateBattleScreen(wild, false);
-  appendBattleLog(`${wild.pokemon_name} used ${moveName}! ${result.log}`, "wild");
+    updateBattleScreen(active, true);
+    updateBattleScreen(wild, false);
+    appendBattleLog(`${wild.pokemon_name} used ${moveName}! ${result.log}`, "wild");
 
-  if (active.currentHP <= 0) {
-    appendBattleLog(`${active.pokemon_name} fainted!`, "wild");
-    active.currentEnergy = 0;
-    setTimeout(() => clearSprite(true, "No Pokémon"), 900);
+    if (active.currentHP <= 0) {
+      appendBattleLog(`${active.pokemon_name} fainted!`, "wild");
+      active.currentEnergy = 0;
+      setTimeout(() => clearSprite(true, "No Pokémon"), 900);
 
-    const nextIndex = window.player.party.findIndex(p => p.currentHP > 0);
-    if (nextIndex >= 0) {
-      window.player.activeIndex = nextIndex;
-      updateBattleScreen(window.player.party[nextIndex], true);
-      appendBattleLog(`${window.player.party[nextIndex].pokemon_name} is now your active Pokémon!`, "player");
+      const nextIndex = window.player.party.findIndex(p => p.currentHP > 0);
+      if (nextIndex >= 0) {
+        window.player.activeIndex = nextIndex;
+        updateBattleScreen(window.player.party[nextIndex], true);
+        appendBattleLog(`${window.player.party[nextIndex].pokemon_name} is now your active Pokémon!`, "player");
+      }
     }
-  }
+  });
 }
 
-function resetWildSpritePosition(mode = "auto") {
-  const wildSprite = document.getElementById("wildSprite");
-  if (!wildSprite) return;
+
+
+
+function resetSpritePosition(spriteId, mode = "auto", mobilePos, pcPos) {
+  const sprite = document.getElementById(spriteId);
+  if (!sprite) return;
 
   // Reset classes & styles
-  wildSprite.className = "";
-  wildSprite.style.transition = "none";
-  wildSprite.style.position = "absolute";
-  wildSprite.style.opacity = "1";
-  wildSprite.style.zIndex = "9999";
+  sprite.className = "";
+  sprite.style.transition = "none";
+  sprite.style.position = "absolute";
+  sprite.style.opacity = "1";
+  sprite.style.zIndex = "5";
 
   // Detect file if auto
   if (mode === "auto") {
@@ -316,26 +524,35 @@ function resetWildSpritePosition(mode = "auto") {
     mode = path.includes("index-m") ? "mobile" : "pc";
   }
 
-  // Set position & scale based on mode
-  let top, left, scale;
-  if (mode === "mobile") {
-    top = "10%";
-    left = "82%";
-    scale = 1.8;
-  } else {
-    top = "10px";
-    left = "165%";
-    scale = 1;
-  }
+  // Choose position & scale
+  const pos = mode === "mobile" ? mobilePos : pcPos;
 
-  wildSprite.style.top = top;
-  wildSprite.style.left = left;
-  wildSprite.style.transform = `translate(-50%, 0) scale(${scale}) rotate(0deg)`;
+  const flip = pos.flip ? -1 : 1; // flip horizontally if pos.flip is true
 
-  // Apply smooth transition
+  sprite.style.top = pos.top;
+  sprite.style.left = pos.left;
+  sprite.style.transform = `translate(-50%, 0) scaleX(${flip}) scale(${pos.scale}) rotate(0deg)`;
+
+  // Apply smooth transition after positioning
   requestAnimationFrame(() => {
-    wildSprite.style.transition = "transform 0.5s ease, opacity 0.5s ease";
+    sprite.style.transition = "transform 0.5s ease, opacity 0.5s ease";
   });
+}
+
+// Usage for wild sprite (facing right by default)
+function resetWildSpritePosition(mode = "auto") {
+  resetSpritePosition("wildSprite", mode, 
+    { top: "2%", left: "82%", scale: 1.8, flip: false },   // mobile
+    { top: "10px", left: "165%", scale: 1, flip: false }   // PC
+  );
+}
+
+// Usage for player sprite (facing left)
+function resetPlayerSpritePosition(mode = "auto") {
+  resetSpritePosition("playerSprite", mode, 
+    { top: "60%", left: "18%", scale: 1.8, flip: true },  // mobile
+    { top: "10px", left: "20%", scale: 1, flip: true }    // PC
+  );
 }
 
 
@@ -362,6 +579,48 @@ function checkPlayerLevelUp() {
   }
 }
 
+
+
+// ================= INITIALIZE HP =================
+// Call this after your player/enemy Pokémon are set
+function initBattleHP() {
+  const player = window.player?.party[window.player.activeIndex];
+  const enemy = window.currentEnemy;
+
+  if (player) {
+    if (player.currentHP == null) player.currentHP = player.maxHP;
+    updateHPBar(true, player.currentHP, player.maxHP);
+  }
+
+  if (enemy) {
+    if (enemy.currentHP == null) enemy.currentHP = enemy.maxHP;
+    updateHPBar(false, enemy.currentHP, enemy.maxHP);
+  }
+}
+
+// ================= EXAMPLE USAGE =================
+// After loading a wild encounter or starting a battle:
+initBattleHP();
+
+// ================= HP DURING BATTLE =================
+// When player/enemy takes damage:
+function dealDamage(isPlayer, dmg) {
+  const target = isPlayer ? window.player.party[window.player.activeIndex] : window.currentEnemy;
+  if (!target) return;
+
+  target.currentHP = Math.max(0, target.currentHP - dmg);
+  updateHPBar(isPlayer, target.currentHP, target.maxHP);
+}
+
+// When healing:
+function healPokemon(isPlayer, amount) {
+  const target = isPlayer ? window.player.party[window.player.activeIndex] : window.currentEnemy;
+  if (!target) return;
+
+  target.currentHP = Math.min(target.maxHP, target.currentHP + amount);
+  updateHPBar(isPlayer, target.currentHP, target.maxHP);
+}
+
 function levelUpPokemon(pokemon, expGain) {
   pokemon.exp = (pokemon.exp || 0) + expGain;
   if (!pokemon.expToNext) pokemon.expToNext = getPokemonExpToNext(pokemon.level);
@@ -370,11 +629,53 @@ function levelUpPokemon(pokemon, expGain) {
     pokemon.exp -= pokemon.expToNext;
     pokemon.level++;
     pokemon.expToNext = getPokemonExpToNext(pokemon.level);
-    appendBattleLog(`${pokemon.pokemon_name} leveled up! Now Lv ${pokemon.level}`, "player");
 
-    applyTalentModifiers(pokemon);
+    appendBattleLog(
+      `${pokemon.pokemon_name} leveled up! Now Lv ${pokemon.level}`,
+      "player"
+    );
+
+    // 🔥 RECALCULATE STATS
+    applyTalentModifiers(pokemon);     // updates staTotal
+    pokemon.maxHP = Math.floor(pokemon.staTotal * 2);
+
+    // ❤️ FULL HEAL ON LEVEL UP
+    pokemon.currentHP = pokemon.maxHP;
+
     calculateCP(pokemon);
-    syncCurrentHP(pokemon);
+
+    // 🔄 UPDATE UI
     updateBattleScreen(pokemon, true);
   }
+}
+
+
+const DITTO_DISGUISE_RATE = 0.1; // 50% for trial
+
+function applyDittoDisguise(pokemon) {
+  if (pokemon.pokemon_name === "Ditto") return;
+  if (Math.random() < DITTO_DISGUISE_RATE) {
+    pokemon.isDitto = true;
+    pokemon.disguisedAs = pokemon.pokemon_name;
+    pokemon.trueForm = "Ditto";
+    pokemon.pokemon_name = pokemon.disguisedAs; // visual disguise
+  }
+}
+
+function revealDitto(wild) {
+  if (!wild.isDitto) return;
+
+  appendBattleLog(`😲 Surprise! The ${wild.disguisedAs} was actually Ditto!`, "system");
+
+  const dittoBase = window.pokemonDB.find(p => p.pokemon_name === "Ditto");
+  if (dittoBase) {
+    Object.assign(wild, dittoBase);
+    applyTalentModifiers(wild);
+    wild.maxHP = Math.floor(wild.staTotal * 2);
+    wild.currentHP = 0; // already defeated
+    calculateCP(wild);
+  }
+
+  wild.isDitto = false;
+  updateBattleScreen(wild, false);
 }

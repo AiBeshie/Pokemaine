@@ -1,337 +1,206 @@
 window.routes = [
-  {
-    name: "Route 1",
-    region: "Kanto",
-    levelRange: [1,3],
-    wildPokemon: [
-      { name: "Pidgey", rate: 0.15 },
-      { name: "Rattata", rate: 0.15 },
-      { name: "Caterpie", rate: 0.12 },
-      { name: "Weedle", rate: 0.12 },
-      { name: "Nidoran♀", rate: 0.1 },
-      { name: "Nidoran♂", rate: 0.1 },
-      { name: "Spearow", rate: 0.08 },
-      { name: "Oddish", rate: 0.08 },
-      { name: "Venonat", rate: 0.05 },
-      { name: "Paras", rate: 0.05 }
-    ],
-    unlockCondition: () => player.level >= 1
-  },
-  {
-    name: "Route 2",
-    region: "Kanto",
-    levelRange: [4,7],
-    wildPokemon: [
-      { name: "Pidgey", rate: 0.12 },
-      { name: "Spearow", rate: 0.12 },
-      { name: "Ekans", rate: 0.12 },
-      { name: "Sandshrew", rate: 0.12 },
-      { name: "Nidoran♀", rate: 0.1 },
-      { name: "Nidoran♂", rate: 0.1 },
-      { name: "Caterpie", rate: 0.08 },
-      { name: "Weedle", rate: 0.08 },
-      { name: "Oddish", rate: 0.06 },
-      { name: "Bellsprout", rate: 0.06 }
-    ],
-    unlockCondition: () => player.level >= 5
-  },
-  {
-    name: "Route 3",
-    region: "Kanto",
-    levelRange: [7,10],
-    wildPokemon: [
-      { name: "Zubat", rate: 0.15 },
-      { name: "Oddish", rate: 0.15 },
-      { name: "Bellsprout", rate: 0.12 },
-      { name: "Paras", rate: 0.12 },
-      { name: "Venonat", rate: 0.1 },
-      { name: "Meowth", rate: 0.1 },
-      { name: "Psyduck", rate: 0.08 },
-      { name: "Poliwag", rate: 0.08 },
-      { name: "Sandshrew", rate: 0.05 },
-      { name: "Ekans", rate: 0.05 }
-    ],
-    unlockCondition: () => player.level >= 7
-  },
-  {
-    name: "Route 4",
-    region: "Kanto",
-    levelRange: [10,12],
-    wildPokemon: [
-      { name: "Meowth", rate: 0.15 },
-      { name: "Psyduck", rate: 0.15 },
-      { name: "Poliwag", rate: 0.12 },
-      { name: "Oddish", rate: 0.12 },
-      { name: "Bellsprout", rate: 0.1 },
-      { name: "Paras", rate: 0.1 },
-      { name: "Venonat", rate: 0.08 },
-      { name: "Magnemite", rate: 0.08 },
-      { name: "Voltorb", rate: 0.05 },
-      { name: "Machop", rate: 0.05 }
-    ],
-    unlockCondition: () => player.level >= 10
-  },
-  {
-    name: "Route 5",
-    region: "Kanto",
-    levelRange: [12,15],
-    wildPokemon: [
-      { name: "Machop", rate: 0.15 },
-      { name: "Mankey", rate: 0.15 },
-      { name: "Magnemite", rate: 0.12 },
-      { name: "Voltorb", rate: 0.12 },
-      { name: "Sandshrew", rate: 0.1 },
-      { name: "Ekans", rate: 0.1 },
-      { name: "Pidgey", rate: 0.08 },
-      { name: "Spearow", rate: 0.08 },
-      { name: "Rattata", rate: 0.05 },
-      { name: "Nidoran♀", rate: 0.05 }
-    ],
-    unlockCondition: () => player.level >= 12
-  }
+
+/* ================= EARLY GAME ================= */
+
+{
+  name: "Route 1",
+  region: "Kanto",
+  levelRange: [1,3],
+  wildPokemon: [
+    { name: "Pidgey", rate: 0.18 },
+    { name: "Rattata", rate: 0.18 },
+    { name: "Caterpie", rate: 0.14 },
+    { name: "Weedle", rate: 0.14 },
+    { name: "Metapod", rate: 0.08 },
+    { name: "Kakuna", rate: 0.08 },
+    { name: "Nidoran♀", rate: 0.05 },
+    { name: "Nidoran♂", rate: 0.05 }
+  ],
+  unlockCondition: () => player.level >= 1
+},
+
+{
+  name: "Route 2",
+  region: "Kanto",
+  levelRange: [4,7],
+  wildPokemon: [
+    { name: "Pidgey", rate: 0.15 },
+    { name: "Spearow", rate: 0.12 },
+    { name: "Ekans", rate: 0.12 },
+    { name: "Sandshrew", rate: 0.12 },
+    { name: "Butterfree", rate: 0.08 },
+    { name: "Beedrill", rate: 0.08 },
+    { name: "Oddish", rate: 0.07 },
+    { name: "Bellsprout", rate: 0.06 }
+  ],
+  unlockCondition: () => player.level >= 4
+},
+
+{
+  name: "Route 3",
+  region: "Kanto",
+  levelRange: [7,10],
+  wildPokemon: [
+    { name: "Zubat", rate: 0.15 },
+    { name: "Paras", rate: 0.12 },
+    { name: "Venonat", rate: 0.1 },
+    { name: "Meowth", rate: 0.1 },
+    { name: "Psyduck", rate: 0.08 },
+    { name: "Poliwag", rate: 0.08 },
+    { name: "Diglett", rate: 0.05 },
+    { name: "Clefairy", rate: 0.04 }
+  ],
+  unlockCondition: () => player.level >= 7
+},
+
+/* ================= MID GAME ================= */
+
+{
+  name: "Route 4",
+  region: "Kanto",
+  levelRange: [10,14],
+  wildPokemon: [
+    { name: "Geodude", rate: 0.15 },
+    { name: "Machop", rate: 0.15 },
+    { name: "Magnemite", rate: 0.12 },
+    { name: "Voltorb", rate: 0.1 },
+    { name: "Onix", rate: 0.06 },
+    { name: "Oddish", rate: 0.08 },
+    { name: "Bellsprout", rate: 0.08 }
+  ],
+  unlockCondition: () => player.level >= 10
+},
+
+{
+  name: "Route 5",
+  region: "Kanto",
+  levelRange: [14,18],
+  wildPokemon: [
+    { name: "Mankey", rate: 0.14 },
+    { name: "Machop", rate: 0.14 },
+    { name: "Grimer", rate: 0.12 },
+    { name: "Koffing", rate: 0.12 },
+    { name: "Sandshrew", rate: 0.1 },
+    { name: "Ekans", rate: 0.1 }
+  ],
+  unlockCondition: () => player.level >= 14
+},
+
+{
+  name: "Route 6",
+  region: "Kanto",
+  levelRange: [18,22],
+  wildPokemon: [
+    { name: "Ivysaur", rate: 0.12 },
+    { name: "Charmeleon", rate: 0.12 },
+    { name: "Wartortle", rate: 0.12 },
+    { name: "Kadabra", rate: 0.1 },
+    { name: "Machoke", rate: 0.1 },
+    { name: "Haunter", rate: 0.08 }
+  ],
+  unlockCondition: () => player.level >= 18
+},
+
+/* ================= LATE GAME ================= */
+
+{
+  name: "Victory Road",
+  region: "Kanto",
+  levelRange: [30,40],
+  wildPokemon: [
+    { name: "Rhyhorn", rate: 0.15 },
+    { name: "Rhydon", rate: 0.1 },
+    { name: "Machoke", rate: 0.12 },
+    { name: "Graveler", rate: 0.12 },
+    { name: "Onix", rate: 0.08 }
+  ],
+  unlockCondition: () => player.level >= 30
+}
 ];
+window.routes.push({
+  name: "Safari Zone",
+  region: "Kanto",
+  levelRange: [25,35],
+  wildPokemon: [
+    { name: "Tauros", rate: 0.08 },
+    { name: "Kangaskhan", rate: 0.06 },
+    { name: "Chansey", rate: 0.05 },
+    { name: "Scyther", rate: 0.06 },
+    { name: "Pinsir", rate: 0.06 },
+    { name: "Exeggcute", rate: 0.1 },
+    { name: "Lickitung", rate: 0.04 }
+  ],
+  unlockCondition: () => player.level >= 25
+});
 
-window.routes.push(
-  {
-    name: "Route 6",
-    region: "Kanto",
-    levelRange: [15,20],
-    wildPokemon: [
-      { name: "Ivysaur", rate: 0.15 },
-      { name: "Kadabra", rate: 0.12 },
-      { name: "Machoke", rate: 0.12 },
-      { name: "Wartortle", rate: 0.1 },
-      { name: "Haunter", rate: 0.1 },
-      { name: "Golbat", rate: 0.08 },
-      { name: "Poliwhirl", rate: 0.08 },
-      { name: "Graveler", rate: 0.08 },
-      { name: "Weepinbell", rate: 0.08 },
-      { name: "Charmeleon", rate: 0.09 }
-    ],
-    unlockCondition: () => player.level >= 15
-  },
-  {
-    name: "Route 7",
-    region: "Kanto",
-    levelRange: [20,23],
-    wildPokemon: [
-      { name: "Kadabra", rate: 0.14 },
-      { name: "Machoke", rate: 0.14 },
-      { name: "Graveler", rate: 0.12 },
-      { name: "Wartortle", rate: 0.12 },
-      { name: "Haunter", rate: 0.12 },
-      { name: "Ivysaur", rate: 0.1 },
-      { name: "Golbat", rate: 0.08 },
-      { name: "Poliwhirl", rate: 0.08 },
-      { name: "Weepinbell", rate: 0.05 },
-      { name: "Charmeleon", rate: 0.05 }
-    ],
-    unlockCondition: () => player.level >= 20
-  },
-  {
-    name: "Route 8",
-    region: "Kanto",
-    levelRange: [23,25],
-    wildPokemon: [
-      { name: "Machoke", rate: 0.13 },
-      { name: "Haunter", rate: 0.13 },
-      { name: "Poliwhirl", rate: 0.12 },
-      { name: "Weepinbell", rate: 0.12 },
-      { name: "Graveler", rate: 0.1 },
-      { name: "Kadabra", rate: 0.1 },
-      { name: "Charmeleon", rate: 0.08 },
-      { name: "Wartortle", rate: 0.07 },
-      { name: "Golbat", rate: 0.05 },
-      { name: "Ivysaur", rate: 0.05 }
-    ],
-    unlockCondition: () => player.level >= 23
-  },
-  {
-    name: "Route 9",
-    region: "Kanto",
-    levelRange: [25,30],
-    wildPokemon: [
-      { name: "Haunter", rate: 0.15 },
-      { name: "Poliwhirl", rate: 0.14 },
-      { name: "Charmeleon", rate: 0.12 },
-      { name: "Kadabra", rate: 0.12 },
-      { name: "Machoke", rate: 0.1 },
-      { name: "Weepinbell", rate: 0.1 },
-      { name: "Golbat", rate: 0.08 },
-      { name: "Wartortle", rate: 0.07 },
-      { name: "Graveler", rate: 0.06 },
-      { name: "Ivysaur", rate: 0.06 }
-    ],
-    unlockCondition: () => player.level >= 25
-  },
-  {
-    name: "Route 10",
-    region: "Kanto",
-    levelRange: [30,35],
-    wildPokemon: [
-      { name: "Machoke", rate: 0.14 },
-      { name: "Kadabra", rate: 0.14 },
-      { name: "Haunter", rate: 0.12 },
-      { name: "Charmeleon", rate: 0.12 },
-      { name: "Graveler", rate: 0.1 },
-      { name: "Weepinbell", rate: 0.1 },
-      { name: "Golbat", rate: 0.08 },
-      { name: "Poliwhirl", rate: 0.06 },
-      { name: "Wartortle", rate: 0.06 },
-      { name: "Ivysaur", rate: 0.08 }
-    ],
-    unlockCondition: () => player.level >= 30
-  }
-);
 
-window.routes.push(
-  {
-    name: "Fire Route",
-    region: "Kanto",
-    levelRange: [35,40],
-    wildPokemon: [
-      { name: "Growlithe", rate: 0.10 },
-      { name: "Vulpix", rate: 0.10 },
-      { name: "Ponyta", rate: 0.08 },
-      { name: "Magmar", rate: 0.05 },
-      { name: "Moltres", rate: 0.01 },
-      { name: "Charmander", rate: 0.03 },
-      { name: "Arcanine", rate: 0.02 },
-      { name: "Rapidash", rate: 0.02 },
-      { name: "Flareon", rate: 0.02 },
-      { name: "Hitmonchan", rate: 0.01 },
-      { name: "Ninetales", rate: 0.01 },
-      { name: "Oddish", rate: 0.06 },
-      { name: "Bellsprout", rate: 0.06 },
-      { name: "Paras", rate: 0.05 },
-      { name: "Parasect", rate: 0.04 },
-      { name: "Pidgey", rate: 0.05 },
-      { name: "Pidgeotto", rate: 0.03 },
-      { name: "Rattata", rate: 0.05 },
-      { name: "Raticate", rate: 0.03 },
-      { name: "Sandshrew", rate: 0.04 },
-      { name: "Sandslash", rate: 0.02 }
-    ],
-    unlockCondition: () => player.level >= 35
-  },
-  {
-    name: "Ice Route",
-    region: "Kanto",
-    levelRange: [35,40.],
-    wildPokemon: [
-      { name: "Articuno", rate: 0.01 },
-      { name: "Jynx", rate: 0.05 },
-      { name: "Seel", rate: 0.08 },
-      { name: "Dewgong", rate: 0.05 },
-      { name: "Gyarados", rate: 0.05 },
-      { name: "Cloyster", rate: 0.03 },
-      { name: "Lapras", rate: 0.02 },
-      { name: "Shellder", rate: 0.06 },
-      { name: "Porygon", rate: 0.02 },
-      { name: "Slowpoke", rate: 0.07 },
-      { name: "Slowbro", rate: 0.03 },
-      { name: "Poliwag", rate: 0.05 },
-      { name: "Poliwhirl", rate: 0.04 },
-      { name: "Poliwrath", rate: 0.02 },
-      { name: "Goldeen", rate: 0.06 },
-      { name: "Seaking", rate: 0.03 },
-      { name: "Krabby", rate: 0.05 },
-      { name: "Kingler", rate: 0.03 },
-      { name: "Magikarp", rate: 0.10 },
-      { name: "Tentacool", rate: 0.05 },
-      	 { name: "Articuno", rate: 0.01 },
-      { name: "Tentacruel", rate: 0.02 }
-    ],
-    unlockCondition: () => player.level >= 35
-  },
-  {
-    name: "Electric Route",
-    region: "Kanto",
-    levelRange: [35,40],
-    wildPokemon: [
-      { name: "Pikachu", rate: 0.10 },
-      { name: "Raichu", rate: 0.05 },
-      { name: "Magnemite", rate: 0.08 },
-      { name: "Magneton", rate: 0.04 },
-      { name: "Dragonite", rate: 0.03 },
-      { name: "Voltorb", rate: 0.06 },
-      { name: "Electrode", rate: 0.03 },
-      { name: "Zapdos", rate: 0.01 },
-      { name: "Electabuzz", rate: 0.05 },
-      { name: "Jolteon", rate: 0.02 },
-      { name: "Zapdos", rate: 0.01 },
-      { name: "Pidgey", rate: 0.05 },
-      { name: "Pidgeotto", rate: 0.03 },
-      { name: "Rattata", rate: 0.04 },
-      { name: "Raticate", rate: 0.02 },
-      { name: "Meowth", rate: 0.05 },
-      { name: "Persian", rate: 0.03 },
-      { name: "Volbeat", rate: 0.02 },
-      { name: "Illumise", rate: 0.02 },
-      { name: "Magnemite", rate: 0.05 },
-      { name: "Magneton", rate: 0.03 },
 
-      { name: "Electabuzz", rate: 0.04 }
-    ],
-    unlockCondition: () => player.level >= 35
-  },
-  {
-    name: "Mew Route",
-    region: "Kanto",
-    levelRange: [40,50],
-    wildPokemon: [
-      { name: "Mew", rate: 0.01 },
-      { name: "Dragonite", rate: 0.03 },
-      { name: "Dragonair", rate: 0.05 },
-      { name: "Gyarados", rate: 0.05 },
-      { name: "Lapras", rate: 0.04 },
-      { name: "Kingler", rate: 0.03 },
-      { name: "Seadra", rate: 0.03 },
-      { name: "Snorlax", rate: 0.02 },
-      { name: "Arcanine", rate: 0.02 },
-      { name: "Exeggcute", rate: 0.03 },
-      { name: "Hitmonlee", rate: 0.02 },
-      { name: "Hitmonchan", rate: 0.02 },
-      { name: "Clefable", rate: 0.02 },
-      { name: "Nidoqueen", rate: 0.03 },
-      { name: "Nidoking", rate: 0.03 },
-      { name: "Vaporeon", rate: 0.03 },
-      { name: "Jolteon", rate: 0.02 },
-      { name: "Flareon", rate: 0.02 },
-      { name: "Machamp", rate: 0.02 },
-      { name: "Golem", rate: 0.02 }
-    ],
-    unlockCondition: () => player.level >= 40
-  },
-  {
-    name: "Mewtwo Route",
-    region: "Kanto",
-    levelRange: [50,70],
-    wildPokemon: [
-      { name: "Mewtwo", rate: 0.01 },
-      { name: "Articuno", rate: 0.01 },
-      { name: "Zapdos", rate: 0.01 },
-      { name: "Moltres", rate: 0.01 },
-      { name: "Dragonite", rate: 0.03 },
-      { name: "Gyarados", rate: 0.05 },
-      { name: "Snorlax", rate: 0.03 },
-      { name: "Lapras", rate: 0.03 },
-      { name: "Kingler", rate: 0.02 },
-      { name: "Electabuzz", rate: 0.03 },
-      { name: "Magmar", rate: 0.02 },
-      { name: "Scyther", rate: 0.03 },
-      { name: "Hitmonlee", rate: 0.02 },
-      { name: "Hitmonchan", rate: 0.02 },
-      { name: "Machamp", rate: 0.02 },
-      { name: "Golem", rate: 0.02 },
-      { name: "Exeggcute", rate: 0.02 },
-      { name: "Clefable", rate: 0.02 },
-      { name: "Nidoking", rate: 0.02 },
-      { name: "Nidoqueen", rate: 0.02 }
-    ],
-    unlockCondition: () => player.level >= 50
-  }
-);
+window.routes.push({
+  name: "Fossil Lab",
+  region: "Kanto",
+  levelRange: [35,45],
+  wildPokemon: [
+    { name: "Omanyte", rate: 0.08 },
+    { name: "Kabuto", rate: 0.08 },
+    { name: "Aerodactyl", rate: 0.03 }
+  ],
+  unlockCondition: () => player.level >= 35
+});
+
+
+
+window.routes.push({
+  name: "Seafoam Islands",
+  region: "Kanto",
+  levelRange: [45,60],
+  wildPokemon: [
+    { name: "Articuno", rate: 0.005 },
+    { name: "Jynx", rate: 0.08 },
+    { name: "Lapras", rate: 0.05 }
+  ],
+  unlockCondition: () => player.level >= 45
+});
+
+window.routes.push({
+  name: "Power Plant",
+  region: "Kanto",
+  levelRange: [45,60],
+  wildPokemon: [
+    { name: "Zapdos", rate: 0.005 },
+    { name: "Electabuzz", rate: 0.08 },
+    { name: "Magneton", rate: 0.1 }
+  ],
+  unlockCondition: () => player.level >= 45
+});
+
+window.routes.push({
+  name: "Mt. Ember",
+  region: "Kanto",
+  levelRange: [45,60],
+  wildPokemon: [
+    { name: "Moltres", rate: 0.005 },
+    { name: "Magmar", rate: 0.08 },
+    { name: "Rapidash", rate: 0.06 }
+  ],
+  unlockCondition: () => player.level >= 45
+});
+
+
+window.routes.push({
+  name: "Cerulean Cave",
+  region: "Kanto",
+  levelRange: [60,75],
+  wildPokemon: [
+    { name: "Mewtwo", rate: 0.003 },
+    { name: "Ditto", rate: 0.05 },
+    { name: "Dragonite", rate: 0.04 }
+  ],
+  unlockCondition: () => player.level >= 60
+});
+
+
+
+
 
 
 
@@ -927,7 +796,6 @@ window.routes.push(
 
 
 
-
 // ------------------ RENDER REGIONS ------------------
 function renderRegionButtons() {
   const regionButtonsDiv = document.getElementById("regionButtons");
@@ -937,7 +805,6 @@ function renderRegionButtons() {
   const regions = [...new Set(window.routes.map(r => r.region))];
 
   regions.forEach(region => {
-    // Try to reuse existing button
     let btn = Array.from(regionButtonsDiv.children).find(b => b.textContent === region);
     if (!btn) {
       btn = document.createElement("button");
@@ -954,6 +821,10 @@ function renderRegionButtons() {
       // Highlight selected region
       regionButtonsDiv.querySelectorAll(".region-btn").forEach(b => b.classList.remove("selected"));
       btn.classList.add("selected");
+
+      // Scroll map buttons to top (optional for mobile)
+      const mapButtonsDiv = document.getElementById("mapButtons");
+      if (mapButtonsDiv) mapButtonsDiv.scrollTop = 0;
     };
   });
 }
@@ -961,14 +832,11 @@ function renderRegionButtons() {
 // ------------------ RENDER ROUTES ------------------
 function renderRouteButtons(region) {
   const mapButtonsDiv = document.getElementById("mapButtons");
-  if (!mapButtonsDiv) return;
-  if (!window.routes || !Array.isArray(window.routes)) return;
-  if (!window.player) window.player = { level: 1, coins: 0, party: [] };
+  if (!mapButtonsDiv || !window.routes) return;
 
   const filteredRoutes = window.routes.filter(r => r.region === region);
 
   filteredRoutes.forEach((route, index) => {
-    // Reuse existing button if exists
     let btn = mapButtonsDiv.children[index];
     if (!btn) {
       btn = document.createElement("button");
@@ -997,6 +865,10 @@ function renderRouteButtons(region) {
         // Highlight selected route
         mapButtonsDiv.querySelectorAll(".route-btn").forEach(b => b.classList.remove("selected"));
         btn.classList.add("selected");
+
+        // Close menu overlay
+        const menuOverlay = document.getElementById("menuOverlay");
+        if (menuOverlay) menuOverlay.style.display = "none";
       };
     } else {
       btn.onclick = null;
@@ -1034,3 +906,4 @@ function setupWildEncounters(route) {
 document.addEventListener('DOMContentLoaded', () => {
   renderRegionButtons();
 });
+

@@ -2,8 +2,6 @@
 
 const MAX_LEVEL = 50;
 const CPM_MAX_LEVEL = 30;
-
-
 function chooseRandomStarter() {
   const starters = window.pokemonDB.filter(p =>
     ["Bulbasaur", "Charmander", "Squirtle"].includes(p.pokemon_name)
@@ -13,9 +11,9 @@ function chooseRandomStarter() {
   const starter = starters[Math.floor(Math.random() * starters.length)];
   const ivs = generateIVs();
   const nature = determineNature(ivs);
-  const level = 2; // initial starter level
+  const level = 3; // initial starter level
 
-  if (!window.player) window.player = { level: 1, coins: 50, party: [] };
+  if (!window.player) window.player = { level: 1, coins: 50, party: [], activeIndex: null };
 
   // Base starter object
   const starterPokemon = {
@@ -23,52 +21,34 @@ function chooseRandomStarter() {
     level,
     ivs,
     nature,
+    currentHP: null,
     currentEnergy: 0,
     max_energy: 100,
     critRate: 0.05,
     critDmg: 1.5,
     dodgeRate: 0.05,
+    isPlayer: true
   };
 
-  // Assign talents first
+  // Assign talents
   assignTalents(starterPokemon);
 
-  // Apply talent modifiers, calculate CP, sync HP
-  renderPokemon(starterPokemon, true);
+  // Initialize stats without putting on battle screen
+  calculateCP(starterPokemon);
+  syncCurrentHP(starterPokemon);
 
-  // Put in player party
+  // Add to party
   window.player.party[0] = starterPokemon;
 
-  // Update UI
+  // Do NOT set activeIndex; player has no active Pokémon yet
+  window.player.activeIndex = null;
+
+  // Update party display
   updatePartyDisplay();
 
-  const playerSprite = document.getElementById("playerSprite");
-  if (playerSprite) {
-    playerSprite.src = `images/${starterPokemon.pokemon_name.toLowerCase()}.png`;
-    playerSprite.alt = starterPokemon.pokemon_name;
-  }
-
-  console.log("Starter chosen:", starterPokemon);
+  console.log("Starter chosen (party only):", starterPokemon);
   return starterPokemon;
 }
-
-// Updated renderPokemon to do everything in proper order
-function renderPokemon(pokemon, isPlayer = false) {
-  // 1️⃣ Apply talent modifiers (talents must already be assigned)
-  applyTalentModifiers(pokemon);
-
-  // 2️⃣ Calculate CP
-  calculateCP(pokemon);
-
-  // 3️⃣ Sync HP based on updated staTotal
-  syncCurrentHP(pokemon);
-
-  // 4️⃣ Update UI if requested
-  if (isPlayer || isPlayer === false) updateBattleScreen(pokemon, isPlayer);
-
-  return pokemon;
-}
-
 
 
 
@@ -126,52 +106,42 @@ function generateIVs() {
 
 // ------------------ NATURE DETERMINATION ------------------
 function determineNature(ivs) {
-  const atk = Number(ivs.attack ?? 0);
-  const def = Number(ivs.defense ?? 0);
-  const sta = Number(ivs.stamina ?? 0);
-
+  const { attack: atk = 0, defense: def = 0, stamina: sta = 0 } = ivs;
   const total = atk + def + sta;
+
+  if (total === 45) return "Mythical";
+  if (total >= 42) return "Legendary";
+
   const stats = [
     { name: "atk", value: atk },
     { name: "def", value: def },
     { name: "sta", value: sta }
   ];
 
-  if (total === 45) return "Mythical";
-  if (total >= 42 && total <= 44) return "Legendary";
-
-  const topCandidates = stats.filter(s => s.value >= 10);
-  if (topCandidates.length >= 2) {
-    const sorted = topCandidates.sort((a, b) => b.value - a.value || a.name.localeCompare(b.name));
-    const pair = [sorted[0].name, sorted[1].name].sort().join(",");
-    if (pair === "atk,def") return "Mighty";
-    if (pair === "atk,sta") return "Fierce";
-    if (pair === "def,sta") return "Sturdy";
-  }
-
-  const singleTop = stats.filter(s => s.value >= 10);
-  const lowCount = stats.filter(s => s.value <= 9).length;
-  if (singleTop.length === 1 && lowCount === 2) {
-    const topName = singleTop[0].name;
-    if (topName === "atk") return "Brave";
-    if (topName === "def") return "Timid";
-    if (topName === "sta") return "Bold";
+  const top = stats.filter(s => s.value >= 10).map(s => s.name).sort();
+  if (top.length === 2) {
+    if (top.join() === "atk,def") return "Mighty";
+    if (top.join() === "atk,sta") return "Fierce";
+    if (top.join() === "def,sta") return "Sturdy";
+  } else if (top.length === 1) {
+    return { atk: "Brave", def: "Timid", sta: "Bold" }[top[0]];
   }
 
   if (atk === def && def === sta) {
-    if (atk >= 0 && atk <= 3) return "Humble";
-    if (atk >= 4 && atk <= 6) return "Steady";
-    if (atk >= 7 && atk <= 9) return "Solid";
-    if (atk >= 10 && atk <= 14) return "Prime";
+    if (atk <= 3) return "Humble";
+    if (atk <= 6) return "Steady";
+    if (atk <= 9) return "Solid";
+    return "Prime";
   }
 
   const maxIV = Math.max(atk, def, sta);
-  if (maxIV >= 1 && maxIV <= 3) return "Mild";
-  if (maxIV >= 4 && maxIV <= 6) return "Plain";
-  if (maxIV >= 7 && maxIV <= 9) return "Rookie";
+  if (maxIV <= 3) return "Mild";
+  if (maxIV <= 6) return "Plain";
+  if (maxIV <= 9) return "Rookie";
 
   return "Neutral";
 }
+
 
 
 // ---------- NATURE COLOR MAP ----------
@@ -461,7 +431,8 @@ function calculateCP(pokemon) {
   const level = pokemon.level || 1;
   const effectiveLevel = Math.min(level, MAX_LEVEL);
 
-  const cpm = CPM[effectiveLevel] || 1.0; // now uses CPM up to level 50
+  const cpm = CPM[effectiveLevel];
+ // now uses CPM up to level 50
 
   const atk = pokemon.atkTotal;
   const def = pokemon.defTotal;
@@ -568,10 +539,24 @@ function calculateDamage(attacker, defender, moveName) {
 
 function syncCurrentHP(pokemon) {
   if (!pokemon.staTotal) return;
-  const maxHP = Math.floor(pokemon.staTotal * 2);
-  pokemon.currentHP = Math.min(pokemon.currentHP ?? maxHP, maxHP);
-  pokemon.maxHP = maxHP;
+
+  const oldMax = pokemon.maxHP || Math.floor(pokemon.staTotal * 2);
+  const newMax = Math.floor(pokemon.staTotal * 2);
+
+  let ratio = 1;
+  if (typeof pokemon.currentHP === "number") {
+    ratio = oldMax > 0 ? pokemon.currentHP / oldMax : 1;
+  }
+
+  pokemon.maxHP = newMax;
+
+  // Allow 0 HP (fainted)
+  pokemon.currentHP = Math.floor(newMax * ratio);
+
+  // Clamp safely
+  pokemon.currentHP = Math.max(0, Math.min(pokemon.currentHP, pokemon.maxHP));
 }
+
 
 
 // ------------------ ENERGY HANDLING ------------------
@@ -592,21 +577,5 @@ window.addEventListener("DOMContentLoaded", () => {
 });
 
 
-function renderPokemon(pokemon, isPlayer = false) {
-  // Step 1: Apply talents & modifiers
-  assignTalents(pokemon);
-  applyTalentModifiers(pokemon);
-
-  // Step 2: Calculate CP
-  calculateCP(pokemon);
-
-  // Step 3: Sync HP
-  syncCurrentHP(pokemon);
-
-  // Step 4: Update UI if requested
-  if (isPlayer || isPlayer === false) updateBattleScreen(pokemon, isPlayer);
-
-  return pokemon;
-}
 
 

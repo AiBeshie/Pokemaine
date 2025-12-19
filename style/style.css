@@ -385,6 +385,72 @@ img.shiny::after {
 body.dark-mode {
   background:#1e1e1e; color:#ddd; transition:0.3s;
 }
+/* ===== BAG ITEM DISPLAY ===== */
+
+#itemsDisplay {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Category */
+.bag-category {
+  border: 2px solid #333;
+  border-radius: 8px;
+  background: #f8f8f8;
+  padding: 6px;
+  box-shadow: inset 0 0 2px rgba(0,0,0,0.3);
+}
+
+.bag-category-title {
+  font-weight: bold;
+  font-size: 13px;
+  margin-bottom: 6px;
+  padding: 2px 6px;
+  background: #ddd;
+  border-radius: 6px;
+  text-align: left;
+}
+
+/* Grid */
+.bag-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+}
+
+/* Item button */
+.bag-item-btn {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 8px;
+  font-size: 12px;
+  background: linear-gradient(to bottom, #ffffff, #e5e5e5);
+  border: 2px solid #333;
+  border-radius: 6px;
+  cursor: pointer;
+  box-shadow: 2px 2px 0 #555;
+}
+
+.bag-item-btn:hover {
+  background: #fff7c2;
+}
+
+.item-name {
+  text-transform: capitalize;
+}
+
+.item-qty {
+  font-weight: bold;
+}
+
+/* Empty */
+.bag-empty {
+  text-align: center;
+  font-style: italic;
+  color: #666;
+}
 
 body.dark-mode header { background: rgba(17,17,17,0.9); }
 body.dark-mode .panel,#partyDisplay,#itemsDisplay,#storageDisplay,#shopItems,#playerDisplay,.moves-box,.message-box {

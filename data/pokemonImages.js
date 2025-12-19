@@ -22,30 +22,35 @@ function getPokemonSprite(pokemon_id, shiny = false) {
   if (!pokemon) return "";
   return shiny ? pokemon.sprites.shiny : pokemon.sprites.normal;
 }
-
 function setPokemonSprite(pokemon, imgElement) {
-  const isShiny = pokemon.shiny; // Pokémon object must have .shiny = true/false
-
-  // Set sprite image
+  const isShiny = pokemon.shiny;
   imgElement.src = getPokemonSprite(pokemon.pokemon_id, isShiny);
 
-  // Remove previous shiny effect classes
-  imgElement.classList.remove("shiny", "glow", "starburst");
+  // Remove old wrapper if any
+  if (imgElement.parentNode.classList.contains('shiny-wrapper')) {
+    const wrapper = imgElement.parentNode;
+    wrapper.parentNode.replaceChild(imgElement, wrapper);
+  }
 
-  // Add shiny classes ONLY if Pokémon is shiny
   if (isShiny) {
-    imgElement.classList.add("shiny", "glow", "starburst");
+    const wrapper = document.createElement('div');
+    wrapper.classList.add('shiny-wrapper');
+    wrapper.style.left = imgElement.style.left;
+    wrapper.style.bottom = imgElement.style.bottom;
+    wrapper.style.width = imgElement.width + "px";
+    wrapper.style.height = imgElement.height + "px";
+
+    imgElement.parentNode.insertBefore(wrapper, imgElement);
+    wrapper.appendChild(imgElement);
   }
 }
 
 
-
-// Example for player switch/update
-function updatePlayerSprite() {
-  updateBattleSprites();
-}
-
-// Optional: initial update after DOM is loaded
+// Example usage after DOM ready
 window.addEventListener("DOMContentLoaded", () => {
-  updateBattleSprites();
+  document.querySelectorAll(".player-sprite, .enemy-sprite").forEach(img => {
+    const pokemonId = parseInt(img.dataset.pokemonId);
+    const pokemon = window.pokemonDB.find(p => p.pokemon_id === pokemonId);
+    if (pokemon) setPokemonSprite(pokemon, img);
+  });
 });
