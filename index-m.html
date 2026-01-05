@@ -1,4 +1,4 @@
-may mali ata haha <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -109,7 +109,9 @@ may mali ata haha <!DOCTYPE html>
     <div class="battle-container">
       <!-- Enemy -->
       <div class="enemy-container">
-        <button><img id="wildSprite" class="pokemon-sprite enemy-sprite" alt=""></button>
+      <div class="spriteWrapper" id="wildSpriteWrapper">
+  <img id="wildSprite">
+</div>
         <div class="hp-box enemy-hp-box">
           <div class="name-level"><span id="wildName">—</span> Lv:<span id="wildLevel">0</span> <span id="wildCP">• CP 0</span></div>
           <div class="bars-row">
@@ -122,9 +124,11 @@ may mali ata haha <!DOCTYPE html>
 
       <!-- Player -->
     <div class="player-container">
-  <button id="playerButton" style="background:transparent; border:none; padding:0; cursor:pointer;">
-    <img id="playerSprite" class="pokemon-sprite player-sprite" alt="">
-  </button>
+ 
+<div class="spriteWrapper" id="playerSpriteWrapper">
+  <img id="playerSprite">
+</div>
+
         <img id="pokeballThrow"  alt="" src="img/greatball.png" 
           style="position:absolute; left:-50%; top:70%; width:40px; height:40px; transform:translateX(-50%) translateY(0); display:none;" >
         <div class="hp-box player-hp-box">

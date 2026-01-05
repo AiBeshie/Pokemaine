@@ -44,12 +44,14 @@ function renderIVBar(value, color = "lime") {
   return `<div style="margin-top:2px;">${bar}</div>`;
 }
 
-// ================== TOOLTIP ==================
 let partyTooltip = null;
 let tooltipTimeout = null;
-let tooltipVisible = false;
+let isTooltipVisible = false;
 
-function createTooltip() {
+// -------------------- SHOW TOOLTIP --------------------
+function showTooltip(poke, target) {
+  clearTimeout(tooltipTimeout);
+
   if (!partyTooltip) {
     partyTooltip = document.createElement("div");
     Object.assign(partyTooltip.style, {
@@ -67,17 +69,16 @@ function createTooltip() {
       fontSize: "0.95em",
       transition: "opacity 0.15s",
       opacity: 0,
-      pointerEvents: "auto"
+      display: "none",
     });
     document.body.appendChild(partyTooltip);
+
+    // Keep tooltip visible when hovering over it
+    partyTooltip.addEventListener("mouseenter", () => clearTimeout(tooltipTimeout));
+    partyTooltip.addEventListener("mouseleave", hideTooltip);
   }
-}
 
-function showTooltip(poke, target) {
-  createTooltip();
-  clearTimeout(tooltipTimeout);
-
-  // Ensure stats
+  // Prepare Pokémon data
   poke.ivs = poke.ivs || generateIVs();
   poke.nature = poke.nature || determineNature(poke.ivs);
   poke.talents = poke.talents || assignTalents(poke);
@@ -86,9 +87,46 @@ function showTooltip(poke, target) {
 
   const shinyIcon = poke.shiny ? "✨ " : "";
   const natureColor = natureColors[poke.nature] || "white";
+  const level = poke.level || 1;
+  const cp = poke.current_cp ?? calculateCP(poke);
+
+  // Bonus stats
+  const effectiveLevel = Math.min(level, MAX_LEVEL);
+  const cpmLevel = Math.min(effectiveLevel, CPM_MAX_LEVEL);
+  const cpm = CPM[cpmLevel];
+  const levelMultiplier = 1 + (effectiveLevel - 1) * 0.02;
+
+  const baseAtk = ((poke.base_attack || 10) + (poke.ivs.attack || 0)) * cpm * levelMultiplier;
+  const baseDef = ((poke.base_defense || 10) + (poke.ivs.defense || 0)) * cpm * levelMultiplier;
+  const baseSta = ((poke.base_stamina || 10) + (poke.ivs.stamina || 0)) * cpm * levelMultiplier;
+
+  const bonus = {
+    atk: (poke.atkTotal - baseAtk).toFixed(1),
+    def: (poke.defTotal - baseDef).toFixed(1),
+    sta: (poke.staTotal - baseSta).toFixed(1),
+    critRate: ((poke.critRateTotal - (poke.critRate || 0)) * 100).toFixed(1),
+    critDmg: (poke.critDmgTotal - (poke.critDmg || 1.5)).toFixed(1),
+    dodge: ((poke.dodgeRateTotal - (poke.dodgeRate || 0.05)) * 100).toFixed(1),
+  };
+
   const maxHP = Math.floor(poke.staTotal * 2);
   const currentHP = poke.currentHP ?? maxHP;
-  const cp = poke.current_cp ?? calculateCP(poke);
+  const atk = poke.atkTotal.toFixed(1);
+  const def = poke.defTotal.toFixed(1);
+
+  const formatBonus = (value, suffix = "") => {
+    const num = parseFloat(value);
+    if (!num) return "";
+    return ` <span style="color:${num > 0 ? 'lime' : 'red'}">(${num > 0 ? '+' : ''}${value}${suffix})</span>`;
+  };
+
+  const renderIVBar = (value, color = "lime") => {
+    let bar = "";
+    for (let i = 0; i < 15; i++) {
+      bar += `<span style="display:inline-block;width:9px;height:6px;margin-right:1px;background:${i < value ? color : '#444'};border-radius:1px;"></span>`;
+    }
+    return `<div style="margin-top:2px;">${bar}</div>`;
+  };
 
   const appraisal = getIVAppraisal(poke.ivs);
 
@@ -102,6 +140,7 @@ function showTooltip(poke, target) {
     </div>
   `;
 
+  // Tooltip HTML
   partyTooltip.innerHTML = `
     <div style="display:flex; align-items:center; gap:12px; margin-bottom:10px;">
       <img src="${getPokemonSprite(poke.pokemon_id, poke.shiny)}" style="width:64px;height:64px;">
@@ -113,6 +152,13 @@ function showTooltip(poke, target) {
       </div>
       <div style="display:flex; flex-direction:column; gap:4px; margin-left:8px;">
         <button id="evolveButton" style="background:#ffcc00;color:#222;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;font-weight:bold;">Evolve</button>
+
+<button id="randomTalentButton" style="
+  background:#1E90FF;color:#fff;
+  border:none;padding:5px 10px;
+  border-radius:4px;cursor:pointer;
+  font-weight:bold;">Random Talent</button>
+
         <button id="transferButton" style="background:#ff4444;color:#fff;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;font-weight:bold;">Transfer</button>
       </div>
     </div>
@@ -130,9 +176,35 @@ function showTooltip(poke, target) {
         ${appraisal.label} IV (${poke.ivs.attack + poke.ivs.defense + poke.ivs.stamina}/45)
       </div>
     </div>
-  `;
 
-  // Button handlers
+    <div style="display:flex; gap:12px; font-size:0.9em; margin-bottom:6px;">
+      <div style="flex:1;">
+        <strong style="color:#FFD700;">Main Stats:</strong>
+        <div>Atk: ${atk}${formatBonus(bonus.atk)}</div>
+        <div>Def: ${def}${formatBonus(bonus.def)}</div>
+        <div>HP: ${currentHP} / ${maxHP}${formatBonus(bonus.sta)}</div>
+      </div>
+      <div style="flex:1;">
+        <strong style="color:#FF4500;">Combat Stats:</strong>
+        <div>Crit: ${(poke.critRateTotal * 100).toFixed(1)}%${formatBonus(bonus.critRate, "%")}</div>
+        <div>Crit Dmg: ${poke.critDmgTotal.toFixed(1)}${formatBonus(bonus.critDmg)}</div>
+        <div>Dodge: ${(poke.dodgeRateTotal * 100).toFixed(1)}%${formatBonus(bonus.dodge, "%")}</div>
+      </div>
+    </div>
+
+    <div style="margin-top:8px; display:flex; flex-wrap:wrap; align-items:center; gap:4px;">
+      <strong style="color:#1E90FF;">Talent:</strong>
+      ${poke.talents?.length ? poke.talents.map(t => `<span style="display:inline-block;">${renderTalentWithIcon(t)}</span>`).join("") : "<em>No talents</em>"}
+    </div>
+  `;
+document.getElementById("randomTalentButton")?.addEventListener("click", () => {
+  poke.talents = getRandomTalents(poke); // calls our randomizer
+  applyTalentModifiers(poke); // reapply bonuses
+  calculateCP(poke); // recalc CP
+  showTooltip(poke, target); // refresh tooltip display
+});
+
+  // BUTTON HANDLERS
   document.getElementById("evolveButton")?.addEventListener("click", async () => {
     const oldHPPercent = poke.currentHP / (poke.staTotal * 2);
     await evolvePokemon(poke);
@@ -141,7 +213,6 @@ function showTooltip(poke, target) {
     poke.currentEnergy = poke.currentEnergy || 0;
     hideTooltip();
     updatePartyDisplay();
-    if (window.player.activeIndex != null) updateBattleScreen(window.player.party[window.player.activeIndex], true);
   });
 
   document.getElementById("transferButton")?.addEventListener("click", () => {
@@ -149,37 +220,59 @@ function showTooltip(poke, target) {
     hideTooltip();
   });
 
-  // Tooltip positioning → always above sprite
+  // POSITION
   const rect = target.getBoundingClientRect();
   const margin = 6;
-  let top = rect.top + window.scrollY - partyTooltip.offsetHeight - margin;
-  let left = rect.left + window.scrollX + rect.width/2 - partyTooltip.offsetWidth/2;
 
-  // If tooltip would go off top screen, place below sprite
-  if (top < window.scrollY + 10) top = rect.bottom + margin;
-
-  // Keep within horizontal bounds
-  if (left < 10) left = 10;
-  if (left + partyTooltip.offsetWidth > window.innerWidth - 10) {
-    left = window.innerWidth - partyTooltip.offsetWidth - 10;
-  }
-
-  partyTooltip.style.top = `${top}px`;
-  partyTooltip.style.left = `${left}px`;
-  partyTooltip.style.opacity = 1;
   partyTooltip.style.display = "block";
-  tooltipVisible = true;
+  partyTooltip.style.opacity = 0;
+
+  setTimeout(() => {
+    let top = rect.top + window.scrollY - partyTooltip.offsetHeight - margin;
+    let left = rect.left + window.scrollX;
+    if (left + partyTooltip.offsetWidth > window.innerWidth - 10) {
+      left = window.innerWidth - partyTooltip.offsetWidth - 10;
+    }
+    partyTooltip.style.top = `${top}px`;
+    partyTooltip.style.left = `${left}px`;
+    partyTooltip.style.opacity = 1;
+    isTooltipVisible = true;
+  }, 0);
 }
 
+// -------------------- HIDE TOOLTIP --------------------
 function hideTooltip() {
+  clearTimeout(tooltipTimeout);
   tooltipTimeout = setTimeout(() => {
     if (partyTooltip) {
       partyTooltip.style.opacity = 0;
-      tooltipVisible = false;
-      setTimeout(() => partyTooltip.style.display = "none", 150);
+      setTimeout(() => {
+        partyTooltip.style.display = "none";
+        isTooltipVisible = false;
+      }, 150);
     }
-  }, 150);
+  }, 100);
 }
+// -------------------- ATTACH TOOLTIP --------------------
+function attachTooltip(iconElement, poke) {
+  iconElement.addEventListener("click", e => {
+    e.stopPropagation();
+    showTooltip(poke, iconElement);
+  });
+
+  // Click/tap outside closes tooltip
+  document.addEventListener("click", e => {
+    if (isTooltipVisible && (!partyTooltip.contains(e.target) && e.target !== currentTooltipTarget)) {
+      hideTooltip();
+    }
+  });
+  document.addEventListener("touchstart", e => {
+    if (isTooltipVisible && (!partyTooltip.contains(e.target) && e.target !== currentTooltipTarget)) {
+      hideTooltip();
+    }
+  });
+}
+
 // ================== PARTY DISPLAY ==================
 function updatePartyDisplay() {
   const partyDisplay = document.getElementById("partyDisplay");
@@ -359,10 +452,12 @@ async function catchPokemon(ballType = "pokeball", onComplete = null) {
       dodgeRate: 0.05,
       level: wild.level || 5
     };
-
-    assignTalents(caught);
-    applyTalentModifiers(caught);
-    calculateCP(caught);
+    
+  // scales stats
+calculateCP(caught);           // uses final stats
+syncCurrentHP(caught);         // update HP after final stats
+assignTalents(caught);        // must come first
+applyTalentModifiers(caught);
 
     if (!window.player.party) window.player.party = [];
     window.player.party.push(caught);
@@ -399,7 +494,8 @@ async function catchPokemon(ballType = "pokeball", onComplete = null) {
     setTimeout(() => { pokeball.style.display = "none"; }, 600);
 
     wildSprite.style.transition = "transform 0.25s ease-out";
-    wildSprite.style.transform += " translate(30px, -20px)";
+    wildSprite.style.transform = "translate(30px, -20px)";
+
 
     setTimeout(() => {
       resetWildSpritePosition();
@@ -419,6 +515,8 @@ async function catchPokemon(ballType = "pokeball", onComplete = null) {
 }
 
 async function throwPokeballForSwitch(index) {
+resetWildSpritePosition();
+  resetPlayerSpritePosition();
   const player = window.player;
   if (!player || index >= player.party.length) return;
 

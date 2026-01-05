@@ -1,3 +1,4 @@
+let attackInProgress = false;
 
 // ------------------ PLAYER INIT ------------------
 function initPlayer() {
@@ -216,89 +217,108 @@ function updateHPBar(isPlayer, currentHP, maxHP) {
 }
 
 
-
 function encounterWild() {
-    resetWildSpritePosition();
-
-    const route = window.currentRoute;
-    if (!route || !route.wildPokemon?.length) {
-        appendBattleLog("No wild Pokémon found on this route.", "system");
-        return;
-    }
-
-    // Random wild Pokémon based on rate
-    let rand = Math.random();
-    let chosen = route.wildPokemon[0];
-    for (let i = 0; i < route.wildPokemon.length; i++) {
-        if (rand < route.wildPokemon[i].rate) {
-            chosen = route.wildPokemon[i];
-            break;
-        }
-        rand -= route.wildPokemon[i].rate;
-    }
-
-    // Match name case-insensitive to pokemonDB
-    const base = window.pokemonDB.find(p =>
-        p.pokemon_name.toLowerCase().trim() === chosen.name.toLowerCase().trim()
+  // ✅ Check if there's already an active wild Pokémon
+  if (window.currentWild && window.currentWild.currentHP > 0) {
+    appendBattleLog(
+      `Cannot search for a new wild Pokémon! ${window.currentWild.disguiseName} is still active.`,
+      "system"
     );
-    if (!base) return;
+    return; // stop function, don't generate new wild
+  }
 
-    const [lvlMin, lvlMax] = route.levelRange || [1, 1];
-    const level = Math.floor(Math.random() * (lvlMax - lvlMin + 1)) + lvlMin;
+  // 🔒 Clear any previous wild safely
+  window.currentWild = null;
 
-    const ivs = generateIVs();
-    const isShiny = Math.random() < 0.5;
+  const route = window.currentRoute;
+  if (!route || !route.wildPokemon?.length) {
+    appendBattleLog("No wild Pokémon found on this route.", "system");
+    return;
+  }
 
-    const wild = {
-        ...base,
-        level,
-        ivs,
-        currentEnergy: 0,
-        max_energy: 100,
-        fast_moves: base.fast_moves || [],
-        charged_moves: base.charged_moves || [],
-        shiny: isShiny,
-        talents: [],
-        disguiseName: base.pokemon_name, // default for display
-    };
+  // 🎯 Pick wild Pokémon by rate
+  let rand = Math.random();
+  let chosen = route.wildPokemon[0];
 
-    assignTalents(wild);
-    applyTalentModifiers(wild);
-    wild.maxHP = Math.floor(wild.staTotal * 2);
-    wild.currentHP = wild.maxHP;
-    calculateCP(wild);
-
-    wild.exp = wild.exp || 0;
-    wild.expToNext = getPokemonExpToNext(wild.level);
-
-    applyDittoDisguise(wild);
-
-    // Update displayName if Ditto disguised
-    const displayName = wild.isDitto ? wild.disguisedAs : wild.pokemon_name;
-    wild.disguiseName = displayName;
-
-    window.currentWild = wild;
-
-    // -------- UPDATE BATTLE SCREEN --------
-    const activePlayer = window.player.party[window.player.activeIndex] || null;
-    updateBattleScreen(activePlayer, true); // player
-    updateBattleScreen(wild, false); // wild Pokémon
-
-    // Update the name span explicitly
-    const wildNameEl = document.getElementById("wildName");
-    if (wildNameEl) wildNameEl.textContent = displayName;
-
-    const shinyMark = wild.shiny ? "✨ " : "";
-    appendBattleLog(`A wild ${shinyMark}${displayName} appeared! (Lv ${wild.level})`);
-
-    // ⚠ Warn if no Pokémon
-    if (!window.player.party.length) {
-        appendBattleLog("You have no Pokémon! Go to your party and summon one.", "system");
-    } else if (!window.player.party[window.player.activeIndex]) {
-        appendBattleLog("Select a Pokémon to send out!", "system");
+  for (const entry of route.wildPokemon) {
+    if (rand < entry.rate) {
+      chosen = entry;
+      break;
     }
-}
+    rand -= entry.rate;
+  }
 
+  // 🔎 Find base Pokémon (case-insensitive)
+  const base = window.pokemonDB.find(p =>
+    p.pokemon_name.toLowerCase().trim() === chosen.name.toLowerCase().trim()
+  );
+  if (!base) return;
+
+  // 📈 Level range
+  const [lvlMin, lvlMax] = route.levelRange || [1, 1];
+  const level = Math.floor(Math.random() * (lvlMax - lvlMin + 1)) + lvlMin;
+
+  // 🎲 Generate wild stats
+  const wild = {
+    ...base,
+    level,
+    ivs: generateIVs(),
+    shiny: Math.random() < 0.5,
+    currentEnergy: 0,
+    max_energy: 100,
+    fast_moves: [...(base.fast_moves || [])],
+    charged_moves: [...(base.charged_moves || [])],
+    talents: [],
+    disguiseName: base.pokemon_name
+  };
+
+  // 🧬 Apply stats
+  assignTalents(wild);
+  applyTalentModifiers(wild);
+  wild.maxHP = Math.floor(wild.staTotal * 2);
+  wild.currentHP = wild.maxHP;
+  calculateCP(wild);
+  wild.exp = wild.exp || 0;
+  wild.expToNext = getPokemonExpToNext(wild.level);
+
+  // 🎭 Ditto logic
+  applyDittoDisguise(wild);
+  wild.disguiseName = wild.isDitto ? wild.disguisedAs : wild.pokemon_name;
+
+  // 🌍 Set global wild
+  window.currentWild = wild;
+
+  // 🧹 HARD RESET wild sprite (important)
+  const wildSprite = document.getElementById("wildSprite");
+  if (wildSprite) {
+    wildSprite.style.transition = "none";
+    wildSprite.style.transform = "none";
+    wildSprite.style.opacity = "1";
+    wildSprite.style.visibility = "visible";
+  }
+
+  // 🖼️ Update UI (positioning happens inside updateBattleScreen)
+  const activePlayer = window.player.party[window.player.activeIndex] || null;
+  updateBattleScreen(activePlayer, true);
+  updateBattleScreen(wild, false);
+
+  // 🏷️ Ensure correct name (Ditto-safe)
+  const wildNameEl = document.getElementById("wildName");
+  if (wildNameEl) wildNameEl.textContent = wild.disguiseName;
+
+  // 📢 Log
+  appendBattleLog(
+    `A wild ${wild.shiny ? "✨ " : ""}${wild.disguiseName} appeared! (Lv ${wild.level})`,
+    "system"
+  );
+
+  // ⚠️ Warnings
+  if (!window.player.party.length) {
+    appendBattleLog("You have no Pokémon! Go to your party and summon one.", "system");
+  } else if (!window.player.party[window.player.activeIndex]) {
+    appendBattleLog("Select a Pokémon to send out!", "system");
+  }
+}
 
 
 
@@ -387,7 +407,6 @@ function animateAttack(attackerId, targetId, move, callback) {
 
 
 
-
 // ==================== PLAYER TURN ====================
 function playerTurn(action, options = {}) {
   const active = window.player.party[window.player.activeIndex];
@@ -427,19 +446,44 @@ function playerTurn(action, options = {}) {
         appendBattleLog(`${wild.pokemon_name} fainted!`, "player");
         wild.currentEnergy = 0;
 
-        const baseExp = 10 + wild.level * 2;
-        const playerExp = Math.floor(baseExp * 0.5);
-        const pokemonExp = baseExp;
+        // ================= EXP REWARD =================
+        let baseExp = 10 + wild.level * 2;
+        let shinyBonus = wild.shiny ? 1.5 : 1;
+        let berryBonus = 1;
+        if (window.player.lastUsedBerry === "pinap") berryBonus = 2; // doubles candy/EXP
+        const pokemonExp = Math.floor(baseExp * shinyBonus * berryBonus);
+        const playerExp = Math.floor(baseExp * 0.5 * shinyBonus * berryBonus);
 
         window.player.exp = (window.player.exp || 0) + playerExp;
         appendBattleLog(`You gained ${playerExp} EXP!`, "player");
         checkPlayerLevelUp();
         levelUpPokemon(active, pokemonExp);
 
-        const coins = Math.floor(Math.random() * 10 + 5);
+        // ================= COINS REWARD =================
+        const coins = Math.floor(Math.random() * 5 + 5 + wild.level * 0.5);
         window.player.coins += coins;
         appendBattleLog(`You got ${coins} coins!`, "player");
 
+        // ================= LOOT DROP =================
+        const lootChance = 0.25; // 25% chance to drop
+        if (Math.random() < lootChance && window.player.items) {
+          const weightedItems = [];
+          Object.keys(window.player.items).forEach(cat => {
+            Object.keys(window.player.items[cat]).forEach(item => {
+              const weight = (item === "golden" || item === "masterball") ? 1 : 5;
+              for (let i = 0; i < weight; i++) weightedItems.push({cat, item});
+            });
+          });
+
+          if (weightedItems.length) {
+            const loot = weightedItems[Math.floor(Math.random() * weightedItems.length)];
+            window.player.items[loot.cat][loot.item] = (window.player.items[loot.cat][loot.item] || 0) + 1;
+            appendBattleLog(`You found a ${loot.item}!`, "player");
+            if (typeof updateItemsDisplay === "function") updateItemsDisplay();
+          }
+        }
+
+        // ================= CLEAR WILD =================
         setTimeout(() => clearSprite(false, "No Wild Pokémon"), 900);
         window.currentWild = null;
         return;
@@ -448,18 +492,16 @@ function playerTurn(action, options = {}) {
       setTimeout(wildTurn, 500);
     });
   }
-if (action === "flee") {
-  appendBattleLog(`You fled from the wild ${wild.pokemon_name}!`, "player");
 
-
-
-  setTimeout(() => {
-    clearSprite(false, "No Wild Pokémon");
-    window.currentWild = null;
-  }, 300);
+  if (action === "flee") {
+    appendBattleLog(`You fled from the wild ${wild.pokemon_name}!`, "player");
+    setTimeout(() => {
+      clearSprite(false, "No Wild Pokémon");
+      window.currentWild = null;
+    }, 300);
+  }
 }
 
-}
 
 
 // ==================== WILD TURN ====================
@@ -556,13 +598,12 @@ function resetPlayerSpritePosition(mode = "auto") {
 }
 
 
-// ------------------ APPEND LOG ------------------
 function appendBattleLog(message, source = "player") {
   const logBox = document.getElementById("battleMessage");
   if (!logBox) return;
 
   const entry = document.createElement("div");
-  const color = source === "player" ? "green" : source === "wild" ? "red" : "white";
+  const color = source === "player" ? "green" : source === "wild" ? "red" : "black"; // <-- palitan white → black
   entry.innerHTML = `<span style="color:${color}">${message}</span>`;
   logBox.appendChild(entry);
   logBox.scrollTop = logBox.scrollHeight;

@@ -50,22 +50,10 @@ html, body {
   background: none; /* important */
 }
 .battle-container {
-  flex: 0.85;
-  position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-
-  /* Set the background image */
   background: url('img/bg.png') no-repeat center center;
-  background-size: cover; /* ensure it fills the container */
-
-  border: 4px solid #333;
-  border-radius: 8px;
-  box-shadow: 4px 4px 0 #555;
-  padding: 4px;
-  box-sizing: border-box;
+  background-size: cover;
 }
+
 
 
 
@@ -419,6 +407,28 @@ html, body {
 #itemCategoryItems {
   margin-top: 4px;
 }
+
+/* Wild Pokémon name */
+#wildName {
+  color: #000;              /* dark text on light background */
+  text-shadow: 1px 1px 1px #fff; /* optional, improves readability */
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+
+body.dark-mode #wildName {
+  color: #fff;              /* white text on dark background */
+  text-shadow: 1px 1px 1px #000;
+}
+
+
+
+
+
+
+
+
 /* ---------------- SHAKE ANIMATION ---------------- */
 @keyframes shake-horizontal {
   0%   { transform: translateX(0); }
@@ -489,35 +499,184 @@ html, body {
 /* ==================== ATTACK FLASH ==================== */
 .attack-flash { animation:flash 0.2s ease; }
 @keyframes flash { 0%{filter:brightness(1);} 50%{filter:brightness(2);} 100%{filter:brightness(1);} }
-/* ================= DARK MODE ================= */
-body.dark-mode { background:#222; }
-body.dark-mode #gbaScreen { background:#555; }
-body.dark-mode .menu-content { background:#555; color:#fff; border-color:#aaa; }
 
-/* Shiny pulse directly on image */
-img.shiny {
-  animation: shinyPulse 1.5s infinite ease-in-out;
-  filter: drop-shadow(0 0 1px gold) drop-shadow(0 0 3px gold) brightness(1);
+
+
+
+/* ================= DARK MODE ================= */
+body.dark-mode {
+  background: #121212;
+  color: #eee;
+}
+.gba-shell {
+  background: none; /* okay */
 }
 
-@keyframes shinyPulse  {
-  0%,100% {
-    filter: brightness(1) drop-shadow(0 0 1px #fff700) drop-shadow(0 0 2px #ffd700);
+body.dark-mode #gbaScreen { background: transparent; }
 
+body.dark-mode .battle-container {
+  background: url('img/bg.png') no-repeat center center;
+  background-size: cover;
+}
+
+
+
+
+
+body.dark-mode .hp-box {
+  background: #333;
+  border-color: #aaa;
+  color: #fff;
+}
+
+body.dark-mode .hp-green { background-color: #0f0; }
+body.dark-mode .hp-yellow { background-color: #ff0; color: #000; }
+body.dark-mode .hp-red { background-color: #f33; color: #fff; }
+body.dark-mode .hp-blue { background-color: #09f; }
+
+body.dark-mode .message-box {
+  background: #222;
+  border-color: #555;
+  color: #fff;
+  box-shadow: 2px 2px 0 #000;
+}
+
+body.dark-mode .moves-box {
+  background: #222;
+  border-color: #555;
+  box-shadow: 2px 2px 0 #000;
+}
+
+body.dark-mode .menu-content {
+  background: linear-gradient(to bottom, #333 0%, #444 100%);
+  color: #fff;
+  border-color: #aaa;
+  box-shadow: 4px 4px 0 #000;
+}
+
+body.dark-mode .menu-section {
+  background: #444;
+  border-bottom: 2px solid #555;
+  box-shadow: inset 0 0 2px rgba(0,0,0,0.6);
+}
+
+body.dark-mode .menu-section h3 {
+  color: #fff;
+  text-shadow: 1px 1px 0 #000;
+}
+
+body.dark-mode button {
+  background: #555;
+  color: #fff;
+  border: 2px solid #888;
+  box-shadow: 2px 2px 0 #000;
+}
+
+body.dark-mode button:hover {
+  background: #777;
+  color: #fff;
+}
+
+body.dark-mode .itemCategoryBtn {
+  background: #2196F3;
+  color: #fff;
+  border-color: #888;
+}
+
+body.dark-mode .itemCategoryBtn:hover {
+  background: #ffae00;
+  color: #000;
+}
+
+body.dark-mode #itemsDisplay,
+body.dark-mode #shopItems,
+body.dark-mode #storageDisplay,
+body.dark-mode #regionButtons,
+body.dark-mode #mapButtons {
+  background: transparent;
+}
+
+body.dark-mode #menuOverlay {
+  background: rgba(0,0,0,0.8);
+}
+
+/* Wild/Active Pokémon name */
+body.dark-mode #wildName,
+body.dark-mode #activeName {
+  color: #fff;
+  text-shadow: 1px 1px 1px #000;
+}
+
+/* Optional: subtle sprite filter for dark backgrounds */
+body.dark-mode .enemy-sprite,
+body.dark-mode .player-sprite {
+  filter: brightness(1.05);
+}
+
+/* ================= DARK MODE ACTIVE / HIGHLIGHT ================= */
+body.dark-mode .menu-bar button.active,
+body.dark-mode .menu-row button.active,
+body.dark-mode .move-buttons button.active,
+body.dark-mode .itemCategoryBtn.active {
+  background: #ffcb05;      /* bright yellow highlight */
+  color: #000;              /* contrast for readability */
+  border-color: #fff;       /* white border for emphasis */
+  box-shadow: 2px 2px 0 #222; /* subtle shadow */
+}
+
+body.dark-mode .menu-bar button.active:hover,
+body.dark-mode .menu-row button.active:hover,
+body.dark-mode .move-buttons button.active:hover,
+body.dark-mode .itemCategoryBtn.active:hover {
+  background: #ffd34d;      /* slightly lighter highlight on hover */
+  color: #000;
+}
+
+
+/* Shiny wrapper effect */
+.shiny {
+  position: relative;
+  display: inline-block;
+  animation: shinyPulse 2s infinite ease-in-out;
+  z-index: 2;
+}
+
+/* Optional extra glow layers */
+.shiny::before,
+.shiny::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.shiny::before {
+  box-shadow: 0 0 5px gold, 0 0 15px gold, 0 0 25px yellow;
+}
+
+.shiny::after {
+  box-shadow: 0 0 10px rgba(255,255,200,0.6), 0 0 20px rgba(255,255,150,0.6);
+  opacity: 0.7;
+}
+
+@keyframes shinyPulse {
+  0%, 100% {
+    filter: brightness(1);
   }
   25% {
-    filter: brightness(1.4) drop-shadow(0 0 1.5px #fff700) drop-shadow(0 0 3px #ffd700);
-
+    filter: brightness(1.3);
   }
   50% {
-    filter: brightness(1.8) drop-shadow(0 0 2px #fff700) drop-shadow(0 0 4px #ffd700);
-   
+    filter: brightness(1.6);
   }
   75% {
-    filter: brightness(1.4) drop-shadow(0 0 1.5px #fff700) drop-shadow(0 0 3px #ffd700);
-    
+    filter: brightness(1.3);
   }
 }
+
+
 
 
 

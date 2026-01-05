@@ -1,7 +1,7 @@
-
-
 const MAX_LEVEL = 50;
 const CPM_MAX_LEVEL = 30;
+
+// ------------------ STARTER ------------------
 function chooseRandomStarter() {
   const starters = window.pokemonDB.filter(p =>
     ["Bulbasaur", "Charmander", "Squirtle"].includes(p.pokemon_name)
@@ -11,11 +11,10 @@ function chooseRandomStarter() {
   const starter = starters[Math.floor(Math.random() * starters.length)];
   const ivs = generateIVs();
   const nature = determineNature(ivs);
-  const level = 3; // initial starter level
+  const level = 3;
 
   if (!window.player) window.player = { level: 1, coins: 50, party: [], activeIndex: null };
 
-  // Base starter object
   const starterPokemon = {
     ...starter,
     level,
@@ -30,27 +29,18 @@ function chooseRandomStarter() {
     isPlayer: true
   };
 
-  // Assign talents
   assignTalents(starterPokemon);
 
-  // Initialize stats without putting on battle screen
-  calculateCP(starterPokemon);
+  calculateStats(starterPokemon); // <-- now calculates stats including IV growth
   syncCurrentHP(starterPokemon);
 
-  // Add to party
   window.player.party[0] = starterPokemon;
-
-  // Do NOT set activeIndex; player has no active Pokémon yet
   window.player.activeIndex = null;
 
-  // Update party display
   updatePartyDisplay();
-
   console.log("Starter chosen (party only):", starterPokemon);
   return starterPokemon;
 }
-
-
 
 // ------------------ TYPE CHART ------------------
 const typeChart = {
@@ -102,6 +92,70 @@ function generateIVs() {
     defense: Math.floor(Math.random() * 16),
     stamina: Math.floor(Math.random() * 16)
   };
+}
+
+// ------------------ CALCULATE STATS WITH IV ------------------
+function calculateStats(pokemon) {
+  const level = Math.min(pokemon.level || 1, MAX_LEVEL);
+  const cpm = CPM[Math.min(level, CPM_MAX_LEVEL)];
+  const levelMultiplier = 1 + (level - 1) * 0.02;
+
+  // Base scaled stats
+  const baseAtk = (pokemon.base_attack || 10) * cpm * levelMultiplier;
+  const baseDef = (pokemon.base_defense || 10) * cpm * levelMultiplier;
+  const baseSta = (pokemon.base_stamina || 10) * cpm * levelMultiplier;
+
+  // --- IV scaling factor (makes IVs matter more) ---
+  const ivAtkFactor = 0.7 + (pokemon.ivs?.attack || 0) / 15 * 0.3;
+  const ivDefFactor = 0.7 + (pokemon.ivs?.defense || 0) / 15 * 0.3;
+  const ivStaFactor = 0.7 + (pokemon.ivs?.stamina || 0) / 15 * 0.3;
+
+  let atk = Math.max(5, baseAtk * ivAtkFactor);
+  let def = Math.max(5, baseDef * ivDefFactor);
+  let sta = Math.max(10, baseSta * ivStaFactor);
+
+  // Apply talents
+  if (pokemon.talents?.length) {
+    const talentScale = level / MAX_LEVEL;
+    let atkBonus = 0, defBonus = 0, staBonus = 0;
+    let critRateBonus = 0, critDmgBonus = 0, dodgeBonus = 0;
+
+    pokemon.talents.forEach(t => {
+      atkBonus += (t.atk || 0) * talentScale;
+      defBonus += (t.def || 0) * talentScale;
+      staBonus += (t.sta || 0) * talentScale;
+      critRateBonus += (t.critRate || 0) * talentScale;
+      critDmgBonus += (t.critDmg || 0) * talentScale;
+      dodgeBonus += (t.dodgeRate || 0) * talentScale;
+    });
+
+    atk += atkBonus;
+    def += defBonus;
+    sta += staBonus;
+
+    pokemon.critRateTotal = (pokemon.critRate || 0.05) + critRateBonus;
+    pokemon.critDmgTotal = (pokemon.critDmg || 1.5) + critDmgBonus;
+    pokemon.dodgeRateTotal = (pokemon.dodgeRate || 0.05) + dodgeBonus;
+
+    pokemon.bonusApplied = {
+      atk: atkBonus.toFixed(1),
+      def: defBonus.toFixed(1),
+      sta: staBonus.toFixed(1),
+      critRate: critRateBonus.toFixed(2),
+      critDmg: critDmgBonus.toFixed(2),
+      dodge: dodgeBonus.toFixed(2)
+    };
+  } else {
+    pokemon.critRateTotal = pokemon.critRate || 0.05;
+    pokemon.critDmgTotal = pokemon.critDmg || 1.5;
+    pokemon.dodgeRateTotal = pokemon.dodgeRate || 0.05;
+  }
+
+  pokemon.atkTotal = atk;
+  pokemon.defTotal = def;
+  pokemon.staTotal = sta;
+
+  calculateCP(pokemon); // recalc CP after stats
 }
 
 // ------------------ NATURE DETERMINATION ------------------
@@ -310,12 +364,11 @@ const talentPools = {
     { name: "Overlord", atk: +35, def: +10, sta: +10, critDmg: +0.15 }
   ]
 };
-
+// ------------------ TALENTS ------------------
 function assignTalents(pokemon) {
   const assignedTalents = [];
   const talentCount = Math.random() < 0.5 ? 1 : 2;
 
-  // Helper to shuffle an array
   const shuffleArray = (array) => array.sort(() => Math.random() - 0.5);
 
   for (let i = 0; i < talentCount; i++) {
@@ -328,29 +381,16 @@ function assignTalents(pokemon) {
     else if (roll < 0.65) { pool = [...talentPools.Uncommon]; rarity = "Uncommon"; }
     else { pool = [...talentPools.Common]; rarity = "Common"; }
 
-    // Remove already assigned talents from the pool
     const availablePool = pool.filter(t => !assignedTalents.some(at => at.name === t.name));
+    if (availablePool.length === 0) continue;
 
-    if (availablePool.length === 0) continue; // nothing left to assign
-
-    // Shuffle and pick the first available talent
     const talent = shuffleArray(availablePool)[0];
-
-    // Assign color based on rarity
-    const colorMap = {
-      Mythical: "red",
-      Legendary: "yellow",
-      Epic: "purple",
-      Rare: "orange",
-      Uncommon: "green",
-      Common: "white"
-    };
-
+    const colorMap = { Mythical: "red", Legendary: "yellow", Epic: "purple", Rare: "orange", Uncommon: "green", Common: "white" };
     assignedTalents.push({ ...talent, rarity, color: colorMap[rarity] });
   }
 
   pokemon.talents = assignedTalents;
-  applyTalentModifiers(pokemon);
+  calculateStats(pokemon); // <-- apply talents immediately
   return assignedTalents;
 }
 
@@ -426,13 +466,12 @@ for (let i = 31; i <= 50; i++) {
   CPM[i] = CPM[i - 1] + 0.01; // example small increment per level
 }
 
-// ------------------ Calculate CP ------------------
+
+// ------------------ CP CALCULATION ------------------
 function calculateCP(pokemon) {
   const level = pokemon.level || 1;
   const effectiveLevel = Math.min(level, MAX_LEVEL);
-
-  const cpm = CPM[effectiveLevel];
- // now uses CPM up to level 50
+  const cpm = CPM[Math.min(effectiveLevel, CPM_MAX_LEVEL)];
 
   const atk = pokemon.atkTotal;
   const def = pokemon.defTotal;
@@ -440,21 +479,18 @@ function calculateCP(pokemon) {
 
   let cp = Math.floor((atk * Math.sqrt(def) * Math.sqrt(sta) * cpm * cpm) / 10);
 
-  // Early game caps
-  if (effectiveLevel === 1) cp = Math.min(cp, 30);
-  else if (effectiveLevel <= 3) cp = Math.min(cp, 55);
+  // Early-game caps
+  if (effectiveLevel <= 3) cp = Math.min(cp, 55);
   else if (effectiveLevel <= 5) cp = Math.min(cp, 90);
   else if (effectiveLevel <= 10) cp = Math.min(cp, 180);
 
   cp = Math.max(10, cp);
 
-  // Final CP with talent bonus
+  // Apply talent-based max CP bonus
+  const bonus = calculateBonusMaxCP(pokemon);
   const baseMaxCP = pokemon.max_cp || 100;
-  const bonusMaxCP = calculateBonusMaxCP(pokemon);
-  const finalMaxCP = baseMaxCP + bonusMaxCP;
-
-  pokemon.current_cp = Math.min(cp, finalMaxCP);
-  pokemon.finalMaxCP = finalMaxCP;
+  pokemon.current_cp = Math.min(cp, baseMaxCP + bonus);
+  pokemon.finalMaxCP = baseMaxCP + bonus;
 
   return pokemon.current_cp;
 }
@@ -464,7 +500,6 @@ function calculateBonusMaxCP(pokemon) {
   const talentScale = effectiveLevel / MAX_LEVEL;
 
   let bonusPercent = 0;
-
   pokemon.talents?.forEach(t => {
     if (t.atk > 0) bonusPercent += t.atk * 0.002;
     if (t.def > 0) bonusPercent += t.def * 0.0015;
@@ -472,18 +507,9 @@ function calculateBonusMaxCP(pokemon) {
   });
 
   bonusPercent *= talentScale;
-
   const baseMax = pokemon.max_cp || 100;
-  let bonus = Math.floor(baseMax * bonusPercent);
-
-  // Safety cap (+25%)
-  bonus = Math.min(bonus, baseMax * 0.25);
-
-  return bonus;
+  return Math.min(Math.floor(baseMax * bonusPercent), baseMax * 0.25);
 }
-
-
-
 
 
 function calculateDamage(attacker, defender, moveName) {
@@ -537,26 +563,62 @@ function calculateDamage(attacker, defender, moveName) {
   return { damage: finalDamage, log: logParts.join(" ") };
 }
 
+// ------------------ SYNC HP ------------------
 function syncCurrentHP(pokemon) {
   if (!pokemon.staTotal) return;
 
   const oldMax = pokemon.maxHP || Math.floor(pokemon.staTotal * 2);
   const newMax = Math.floor(pokemon.staTotal * 2);
-
-  let ratio = 1;
-  if (typeof pokemon.currentHP === "number") {
-    ratio = oldMax > 0 ? pokemon.currentHP / oldMax : 1;
-  }
+  const ratio = pokemon.currentHP != null && oldMax > 0 ? pokemon.currentHP / oldMax : 1;
 
   pokemon.maxHP = newMax;
-
-  // Allow 0 HP (fainted)
   pokemon.currentHP = Math.floor(newMax * ratio);
-
-  // Clamp safely
   pokemon.currentHP = Math.max(0, Math.min(pokemon.currentHP, pokemon.maxHP));
 }
 
+function getRandomTalents(pokemon, maxTalents = 2) {
+  if (!pokemon) return [];
+
+  const assigned = [];
+  const talentCount = Math.min(maxTalents, 1 + Math.floor(Math.random() * 2)); // 1 or 2 talents
+
+  const rarityRoll = () => {
+    const r = Math.random();
+    if (r < 0.01) return "Mythical";
+    if (r < 0.05) return "Legendary";
+    if (r < 0.15) return "Epic";
+    if (r < 0.35) return "Rare";
+    if (r < 0.65) return "Uncommon";
+    return "Common";
+  };
+
+  for (let i = 0; i < talentCount; i++) {
+    const rarity = rarityRoll();
+    const pool = [...talentPools[rarity]];
+
+    // Remove already assigned talents
+    const available = pool.filter(t => !assigned.some(a => a.name === t.name));
+    if (available.length === 0) continue;
+
+    const talent = available[Math.floor(Math.random() * available.length)];
+
+    const colorMap = {
+      Mythical: "red",
+      Legendary: "yellow",
+      Epic: "purple",
+      Rare: "orange",
+      Uncommon: "green",
+      Common: "white"
+    };
+
+    assigned.push({ ...talent, rarity, color: colorMap[rarity] });
+  }
+
+  // Apply bonuses to Pokémon
+  applyTalentModifiers({ ...pokemon, talents: assigned });
+
+  return assigned;
+}
 
 
 // ------------------ ENERGY HANDLING ------------------
