@@ -6,7 +6,7 @@ const defaultItems = {
   balls:    { pokeball:10, greatball:5, ultraball:2, masterball:0 },
   stones:   { fire:1, water:0, leaf:1, thunder:0, moon:0, sun:0 },
   evolveItems: {
-    rareCandy:3,
+    rareCandy:513,
     kingsRock:1,
     metalCoat:0,
     dragonScale:0,
@@ -126,86 +126,154 @@ function renderBagCategoryItems(type) {
 }
 
 
-function useItem(itemType, itemName, targetPokemon = null) {
-  const inv = window.player.items[itemType];
+async function useItem(itemType, itemName, targetPokemon = null) {
+  const inv = window.player?.items?.[itemType];
   if (!inv || inv[itemName] === undefined || inv[itemName] <= 0) {
-    return alert("You don't have this item!");
+    alert("You don't have this item!");
+    return;
   }
 
-  // Kung walang target Pokémon, default sa active Pokémon sa party
+  // -------------------- DEFAULT TARGET --------------------
   if (!targetPokemon) {
-    targetPokemon = window.activePokemon || window.player?.party?.[window.player.activeIndex];
+    targetPokemon =
+      window.activePokemon ||
+      window.player?.party?.[window.player.activeIndex];
   }
 
-  // Para sa items na kailangan ng Pokémon
   const needsTarget = ["berries", "stones", "evolveItems"];
   if (needsTarget.includes(itemType) && !targetPokemon) {
-    return appendBattleLog(`No Pokémon to use ${itemName} on.`);
+    appendBattleLog(`No Pokémon to use ${itemName} on.`, "system");
+    return;
   }
 
-  // APPLY EFFECT
-  switch(itemType) {
+  let consumeItem = true;
+
+  // -------------------- HELPER: REFRESH UI --------------------
+  const refreshPokemonUI = (poke) => {
+    updatePartyDisplay?.();
+    const activeIndex = window.player?.activeIndex ?? 0;
+    if (window.player?.party[activeIndex] === poke) {
+      updateBattleScreen?.(poke, true);
+    }
+
+    if (isTooltipVisible && partyTooltip) {
+      const partyDisplay = document.getElementById("partyDisplay");
+      const slot = partyDisplay?.children?.[window.player.party.indexOf(poke)];
+      const pokeBtn = slot?.querySelector("button");
+      if (pokeBtn) showTooltip(poke, pokeBtn);
+    }
+  };
+
+  // -------------------- APPLY ITEM EFFECT --------------------
+  switch (itemType) {
+    // ---------- BERRIES ----------
     case "berries":
       handleBerry(itemName, targetPokemon);
+      refreshPokemonUI(targetPokemon);
       break;
 
-case "balls":
-  const wild = window.currentWild; // dito ang actual wild Pokémon
-  if (!window.isCatching && wild) {
-    if (typeof window.catchPokemon === "function") {
-      const caught = window.catchPokemon(itemName); // your existing catch logic
-
-      // If catch fails (you can define this based on your catchPokemon return value)
-      if (!caught) {
-        appendBattleLog(`${wild.pokemon_name} escaped the Poké Ball!`, "wild");
-
-        // Show poof at wild sprite when it flees
-        createPoofAtSprite("wildSprite");
-
-        setTimeout(() => {
-          clearSprite(false, "No Wild Pokémon");
-          window.currentWild = null;
-        }, 300);
-      }
-
-    } else {
-      appendBattleLog(`Tried to use ${itemName}, but catch function not found.`);
-    }
-  } else {
-    appendBattleLog(`No wild Pokémon to throw ${itemName} at.`, "system");
-    return; // huwag bawasan ang quantity
-  }
-break;
-
-
-
-
-    case "stones":
-    case "evolveItems":
-      if (itemName === "rareCandy") {
-        targetPokemon.level = (targetPokemon.level || 1) + 1;
-        appendBattleLog(`${targetPokemon.pokemon_name} gained +1 level! (Lv ${targetPokemon.level})`);
-        if (typeof recalcPokemonStats === "function") recalcPokemonStats(targetPokemon);
-        if (typeof updateBattleScreen === "function") updateBattleScreen(targetPokemon, true);
+    // ---------- BALLS ----------
+    case "balls": {
+      const wild = window.currentWild;
+      if (!window.isCatching && wild && typeof window.catchPokemon === "function") {
+        const caught = window.catchPokemon(itemName);
+        if (!caught) {
+          appendBattleLog(`${wild.pokemon_name} escaped the Poké Ball!`, "wild");
+          createPoofAtSprite("wildSprite");
+          setTimeout(() => {
+            clearSprite(false, "No Wild Pokémon");
+            window.currentWild = null;
+          }, 300);
+        }
       } else {
-        if (typeof evolvePokemonWithItem === "function") evolvePokemonWithItem(itemName, targetPokemon);
-        else appendBattleLog(`Tried to use ${itemName}, but evolve function not found.`);
+        appendBattleLog(`No wild Pokémon to throw ${itemName} at.`, "system");
+        consumeItem = false;
       }
       break;
+    }
 
+    // ---------- STONES / EVOLVE ITEMS ----------
+case "stones":
+case "evolveItems": {
+  // ------------- RARE CANDY -------------
+  if (itemName === "rareCandy") {
+    const currentLevel = targetPokemon.level || 1;
+    if (currentLevel >= MAX_LEVEL) {
+      appendBattleLog(`${targetPokemon.pokemon_name} is already at max level.`, "system");
+      consumeItem = false;
+      break;
+    }
+
+    targetPokemon.level = Math.min(currentLevel + 0.5, MAX_LEVEL);
+
+    // ---------- RECALC STATS ----------
+    if (typeof recalcPokemonStats === "function") recalcPokemonStats(targetPokemon);
+    applyTalentModifiers(targetPokemon);
+    calculateCP(targetPokemon);
+
+    // ---------- SAFE HP SYNC ----------
+    // Always recalc maxHP from staTotal
+    const oldHPPercent = targetPokemon.currentHP && targetPokemon.maxHP
+      ? targetPokemon.currentHP / targetPokemon.maxHP
+      : 1;
+    targetPokemon.maxHP = Math.floor(targetPokemon.staTotal * 2);
+    targetPokemon.currentHP = Math.max(1, Math.round(targetPokemon.maxHP * oldHPPercent));
+
+    // ---------- REFRESH UI ----------
+    refreshPokemonUI(targetPokemon);
+
+    appendBattleLog(`${targetPokemon.pokemon_name} powered up! (Lv ${targetPokemon.level})`, "player");
+  } 
+  // ------------- EVOLVE ITEMS -------------
+  else {
+    if (typeof evolvePokemonWithItem === "function") {
+      const oldHPPercent = targetPokemon.currentHP && targetPokemon.maxHP
+        ? targetPokemon.currentHP / targetPokemon.maxHP
+        : 1;
+
+      await evolvePokemonWithItem(itemName, targetPokemon);
+
+      // ---------- RECALC STATS ----------
+      applyTalentModifiers(targetPokemon);
+      calculateCP(targetPokemon);
+
+      // ---------- SAFE HP SYNC ----------
+      targetPokemon.maxHP = Math.floor(targetPokemon.staTotal * 2);
+      targetPokemon.currentHP = Math.max(1, Math.round(targetPokemon.maxHP * oldHPPercent));
+      targetPokemon.currentEnergy = targetPokemon.currentEnergy || 0;
+
+      // ---------- REFRESH UI ----------
+      refreshPokemonUI(targetPokemon);
+
+      appendBattleLog(`${targetPokemon.pokemon_name} evolved!`, "player");
+    } else {
+      appendBattleLog(`Tried to use ${itemName}, but evolve function not found.`, "system");
+      consumeItem = false;
+    }
+  }
+  break;
+}
+
+
+    // ---------- SPECIAL ITEMS ----------
     case "special":
-      if (itemName === "stardust") appendBattleLog("Stardust used!");
+      if (itemName === "stardust") {
+        appendBattleLog("Stardust used!", "system");
+      }
       break;
   }
 
-  // DECREMENT ITEM QUANTITY
-  inv[itemName]--;
-  if (inv[itemName] <= 0) inv[itemName] = 0;
+  // -------------------- CONSUME ITEM --------------------
+  if (consumeItem) {
+    inv[itemName] = Math.max(0, inv[itemName] - 1);
+  }
 
-  // UPDATE UI
-  updateItemsDisplay();      // refresh bag grid
-  safeUpdatePlayerDisplay(); // refresh coins / player info
+  // -------------------- UPDATE UI --------------------
+  updateItemsDisplay?.();
+  safeUpdatePlayerDisplay?.();
 }
+
+
 
 // ------------------ BERRY EFFECTS ------------------
 function handleBerry(berry, pokemon) {

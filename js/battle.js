@@ -101,9 +101,9 @@ function updateBattleScreen(pokemon, isPlayer = true) {
     if (pokemon.currentHP <= 0) spriteImg.classList.add("fainted", "fainted-animate");
   }
 
-  // -------- NAME, LEVEL, CP --------
+  // -------- NAME & CP ONLY (NO LEVEL) --------
   if (nameEl) nameEl.textContent = pokemon.shiny ? `✨ ${pokemon.pokemon_name}` : pokemon.pokemon_name;
-  if (levelEl) levelEl.textContent = pokemon.level || 1;
+  if (levelEl) levelEl.textContent = ""; // <-- LEVEL HIDDEN
   if (cpEl) cpEl.textContent = `CP: ${pokemon.current_cp || 0}`;
 
   // -------- PLAYER MOVES --------
@@ -407,7 +407,7 @@ function animateAttack(attackerId, targetId, move, callback) {
 
 
 
-// ==================== PLAYER TURN ====================
+// ==================== PLAYER TURN (UPDATED EXP) ====================
 function playerTurn(action, options = {}) {
   const active = window.player.party[window.player.activeIndex];
   const wild = window.currentWild;
@@ -446,16 +446,22 @@ function playerTurn(action, options = {}) {
         appendBattleLog(`${wild.pokemon_name} fainted!`, "player");
         wild.currentEnergy = 0;
 
-        // ================= EXP REWARD =================
-        let baseExp = 10 + wild.level * 2;
-        let shinyBonus = wild.shiny ? 1.5 : 1;
-        let berryBonus = 1;
-        if (window.player.lastUsedBerry === "pinap") berryBonus = 2; // doubles candy/EXP
-        const pokemonExp = Math.floor(baseExp * shinyBonus * berryBonus);
-        const playerExp = Math.floor(baseExp * 0.5 * shinyBonus * berryBonus);
+        // ================= EXP REWARD (UPDATED) =================
+        const baseExp = 50 + wild.level * 5; // base EXP
+        const shinyBonus = wild.shiny ? 1.5 : 1;
+        const berryBonus = window.player.lastUsedBerry === "pinap" ? 2 : 1;
 
+        // Add scaling for level difference
+        const levelDiff = wild.level - active.level;
+        const levelMod = 1 + Math.min(levelDiff * 0.1, 0.5); // +10% per level above, max +50%
+        
+        const pokemonExp = Math.floor(baseExp * shinyBonus * berryBonus * levelMod);
+        const playerExp = Math.floor(baseExp * 0.75 * shinyBonus * berryBonus * levelMod); // stronger than before
+
+        // Apply EXP
         window.player.exp = (window.player.exp || 0) + playerExp;
         appendBattleLog(`You gained ${playerExp} EXP!`, "player");
+
         checkPlayerLevelUp();
         levelUpPokemon(active, pokemonExp);
 
@@ -719,4 +725,26 @@ function revealDitto(wild) {
 
   wild.isDitto = false;
   updateBattleScreen(wild, false);
+}
+function updatePartyUI() {
+  if (!window.player || !window.player.party) return;
+
+  const partyContainer = document.getElementById("partyContainer"); // your party list
+  if (!partyContainer) return;
+
+  partyContainer.innerHTML = ""; // clear current display
+
+  window.player.party.forEach((poke, idx) => {
+    const div = document.createElement("div");
+    div.className = "partyPokemon";
+
+    div.innerHTML = `
+      <img src="${getPokemonSprite(poke.pokemon_id, poke.shiny)}" alt="${poke.pokemon_name}" />
+      <span>${poke.shiny ? "✨ " : ""}${poke.pokemon_name}</span>
+      <span>Lv: ${poke.level}</span>
+      <span>HP: ${poke.currentHP}/${poke.maxHP}</span>
+    `;
+
+    partyContainer.appendChild(div);
+  });
 }

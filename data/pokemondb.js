@@ -1017,134 +1017,95 @@ const pokemonEvolutions = {
 
   4:  { next: 5, candy: 25,  item: null },
   5:  { next: 6, candy: 100, item: null },
-
   7:  { next: 8, candy: 25,  item: null },
   8:  { next: 9, candy: 100, item: null },
-
   // Caterpie line
   10: { next: 11, candy: 12,  item: null },
   11: { next: 12, candy: 50,  item: null },
-
   // Weedle line
   13: { next: 14, candy: 12,  item: null },
   14: { next: 15, candy: 50,  item: null },
-
   // Pidgey line
   16: { next: 17, candy: 12,  item: null },
   17: { next: 18, candy: 50,  item: null },
-
   // Rattata line
   19: { next: 20, candy: 25,  item: null },
-
   // Spearow line
   21: { next: 22, candy: 50,  item: null },
-
   // Ekans line
   23: { next: 24, candy: 50,  item: null },
-
   // Sandshrew line
   27: { next: 28, candy: 50,  item: null },
-
   // Nidoran♀ line
   29: { next: 30, candy: 25,  item: null },
   30: { next: 31, candy: 100, item: null },
-
   // Nidoran♂ line
   32: { next: 33, candy: 25,  item: null },
   33: { next: 34, candy: 100, item: null },
-
   // Clefairy line
   35: { next: 36, candy: 50,  item: null },
-
   // Vulpix line
   37: { next: 38, candy: 50,  item: null },
-
   // Jigglypuff line
   39: { next: 40, candy: 50,  item: null },
-
   // Zubat line
   41: { next: 42, candy: 25,  item: null },
-
   // Oddish line
   43: { next: 44, candy: 25,  item: null },
   44: { next: 45, candy: 100, item: null },
-
   // Paras line
   46: { next: 47, candy: 50,  item: null },
-
   // Venonat line
   48: { next: 49, candy: 50,  item: null },
-
   // Diglett line
   50: { next: 51, candy: 50,  item: null },
-
   // Meowth line
   52: { next: 53, candy: 50,  item: null },
-
   // Psyduck line
   54: { next: 55, candy: 50,  item: null },
-
   // Mankey line
   56: { next: 57, candy: 50,  item: null },
-
   // Growlithe line
   58: { next: 59, candy: 50,  item: null },
-
   // Poliwag line
   60: { next: 61, candy: 25,  item: null },
   61: { next: 62, candy: 100, item: null },
-
-  // Abra line
+ // Abra line
   63: { next: 64, candy: 25,  item: null },
   64: { next: 65, candy: 100, item: null },
-
   // Machop line
   66: { next: 67, candy: 25,  item: null },
   67: { next: 68, candy: 100, item: null },
-
   // Bellsprout line
   69: { next: 70, candy: 25,  item: null },
   70: { next: 71, candy: 100, item: null },
-
   // Geodude line
   74: { next: 75, candy: 25,  item: null },
   75: { next: 76, candy: 100, item: null },
-
   // Slowpoke line
   78: { next: 79, candy: 50,  item: null },
   79: { next: 80, candy: 100, item: null },
-
   // Magnemite line (no item requirement in most games)
   81: { next: 82, candy: 50,  item: null },
-
   // Doduo line
   84: { next: 85, candy: 50,  item: null },
-
   // Seel line
   86: { next: 87, candy: 50,  item: null },
-
   // Grimer line
   88: { next: 89, candy: 50,  item: null },
-
   // Shellder line
   90: { next: 91, candy: 50,  item: null },
-
   // Gastly line
   92: { next: 93, candy: 25,  item: null },
   93: { next: 94, candy: 100, item: null },
-
   // Drowzee line
   96: { next: 97, candy: 50,  item: null },
-
   // Krabby line
   98: { next: 99, candy: 50,  item: null },
-
   // Voltorb line
   100: { next: 101, candy: 50, item: null },
-
   // Exeggcute line
   102: { next: 103, candy: 50, item: null },
-
   // Cubone line
   104: { next: 105, candy: 50, item: null },
 
@@ -1155,19 +1116,15 @@ const pokemonEvolutions = {
 
   // Rhyhorn line
   111: { next: 112, candy: 50, item: null },
-
   // Horsea line
   116: { next: 117, candy: 50, item: null },
   117: { next: 118, candy: 100, item: null },
-
   // Goldeen line
   118: { next: 119, candy: 50, item: null },
-
   // Staryu line
   120: { next: 121, candy: 50, item: "Water Stone" },
-
   // Magikarp line
-  129: { next: 130, candy: 400, item: null },
+  129: { next: 130, candy: 50, item: null },
 
   // Omanyte line
   138: { next: 139, candy: 50, item: null },
