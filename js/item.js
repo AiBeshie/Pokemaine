@@ -6,20 +6,26 @@ const defaultItems = {
   balls:    { pokeball:10, greatball:5, ultraball:2, masterball:0 },
   stones:   { fire:1, water:0, leaf:1, thunder:0, moon:0, sun:0 },
   evolveItems: {
-    rareCandy:513,
+    rareCandy:5,
     kingsRock:1,
     metalCoat:0,
     dragonScale:0,
     upgrade:0,
     sinnohStone:0,
     unovaStone:0
-  }
+  },
+special: {
+  ivReroll: 2,
+  talentReroll: 2
+}
 };
 const itemColors = {
   berries: '#FF6384',     // pinkish
   balls: '#36A2EB',       // blue
   stones: '#FFCE56',      // yellow
-  evolveItems: '#9CCC65'  // green
+  evolveItems: '#9CCC65',  // green
+special:'#BA68C8'
+
 };
 
 // Merge defaults with existing items
@@ -140,7 +146,7 @@ async function useItem(itemType, itemName, targetPokemon = null) {
       window.player?.party?.[window.player.activeIndex];
   }
 
-  const needsTarget = ["berries", "stones", "evolveItems"];
+ const needsTarget = ["berries", "stones", "evolveItems", "special"];
   if (needsTarget.includes(itemType) && !targetPokemon) {
     appendBattleLog(`No Pokémon to use ${itemName} on.`, "system");
     return;
@@ -260,6 +266,56 @@ case "evolveItems": {
       if (itemName === "stardust") {
         appendBattleLog("Stardust used!", "system");
       }
+ // 🎲 IV REROLL
+if (itemName === "ivReroll") {
+
+  // block perfect IV
+  if (
+    targetPokemon.ivs.attack === 15 &&
+    targetPokemon.ivs.defense === 15 &&
+    targetPokemon.ivs.stamina === 15
+  ) {
+    appendBattleLog("Perfect IV Pokémon cannot be rerolled!", "system");
+    consumeItem = false;
+    break;
+  }
+
+  // reroll IV
+  targetPokemon.ivs = {
+    attack: Math.floor(Math.random() * 16),
+    defense: Math.floor(Math.random() * 16),
+    stamina: Math.floor(Math.random() * 16)
+  };
+
+  // ⚠️ DO NOT reset talents here
+
+  // recalc stats
+  if (typeof recalcPokemonStats === "function") recalcPokemonStats(targetPokemon);
+  applyTalentModifiers(targetPokemon); // talents stay intact
+  calculateCP(targetPokemon);
+
+  // HP sync
+  const oldHPPercent = targetPokemon.currentHP / targetPokemon.maxHP || 1;
+  targetPokemon.maxHP = Math.floor(targetPokemon.staTotal * 2);
+  targetPokemon.currentHP = Math.max(1, Math.round(targetPokemon.maxHP * oldHPPercent));
+
+  refreshPokemonUI(targetPokemon);
+  appendBattleLog(`${targetPokemon.pokemon_name}'s IVs were randomized!`, "player");
+}
+
+
+  // 🧠 TALENT REROLL
+  if (itemName === "talentReroll") {
+
+    targetPokemon.talents = [];
+    assignTalents(targetPokemon);
+
+    applyTalentModifiers(targetPokemon);
+    calculateCP(targetPokemon);
+
+    refreshPokemonUI(targetPokemon);
+    appendBattleLog(`${targetPokemon.pokemon_name}'s talents were rerolled!`, "player");
+  }
       break;
   }
 
@@ -339,7 +395,12 @@ const shopItems = [
   { type:"evolveItems", name:"dragonScale", cost:500 },
   { type:"evolveItems", name:"upgrade", cost:500 },
   { type:"evolveItems", name:"sinnohStone", cost:800 },
-  { type:"evolveItems", name:"unovaStone", cost:800 }
+  { type:"evolveItems", name:"unovaStone", cost:800 },
+
+// Special items
+{ type:"special", name:"ivReroll", cost:2000 },
+{ type:"special", name:"talentReroll", cost:800 }
+
 ];
 
 let activeShopCategory = null; // currently selected shop category
@@ -447,10 +508,12 @@ if (typeof appendBattleLog !== "function") {
 
 // ------------------ INIT ------------------
 function initItemsModule() {
+  renderBagItems();   // 🔥 REQUIRED
   updateItemsDisplay();
   updateShopDisplay();
   safeUpdatePlayerDisplay();
 }
+
 
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", initItemsModule);

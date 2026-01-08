@@ -406,18 +406,15 @@ function animateAttack(attackerId, targetId, move, callback) {
 }
 
 
-
-// ==================== PLAYER TURN (UPDATED EXP) ====================
+// ==================== PLAYER TURN ====================
 function playerTurn(action, options = {}) {
   const active = window.player.party[window.player.activeIndex];
   const wild = window.currentWild;
 
-  // ✅ Check kung may active Pokémon
   if (!active) {
     appendBattleLog("No active Pokémon! Select one from your party first.", "system");
     return;
   }
-
   if (!wild) {
     appendBattleLog("No wild Pokémon to fight!", "system");
     return;
@@ -434,53 +431,53 @@ function playerTurn(action, options = {}) {
 
     animateAttack("playerSprite", "wildSprite", move, () => {
       const result = calculateDamage(active, wild, moveName);
+
+      // ✅ Append log BEFORE updating screens
+      appendBattleLog(`${active.pokemon_name} used ${moveName}! ${result.log}`, "player");
+
+      // Apply damage & energy
       wild.currentHP = Math.max(0, wild.currentHP - result.damage);
       applyMoveEnergy(active, move);
 
       updateBattleScreen(active, true);
       updateBattleScreen(wild, false);
-      appendBattleLog(`${active.pokemon_name} used ${moveName}! ${result.log}`, "player");
 
+      // Wild fainted
       if (wild.currentHP <= 0) {
         revealDitto(wild);
         appendBattleLog(`${wild.pokemon_name} fainted!`, "player");
         wild.currentEnergy = 0;
 
-        // ================= EXP REWARD (UPDATED) =================
-        const baseExp = 50 + wild.level * 5; // base EXP
+        // ===== EXP REWARD =====
+        const baseExp = 50 + wild.level * 5;
         const shinyBonus = wild.shiny ? 1.5 : 1;
         const berryBonus = window.player.lastUsedBerry === "pinap" ? 2 : 1;
-
-        // Add scaling for level difference
         const levelDiff = wild.level - active.level;
-        const levelMod = 1 + Math.min(levelDiff * 0.1, 0.5); // +10% per level above, max +50%
-        
-        const pokemonExp = Math.floor(baseExp * shinyBonus * berryBonus * levelMod);
-        const playerExp = Math.floor(baseExp * 0.75 * shinyBonus * berryBonus * levelMod); // stronger than before
+        const levelMod = Math.max(0, 1 + Math.min(levelDiff * 0.1, 0.5));
 
-        // Apply EXP
+        const pokemonExp = Math.max(0, Math.floor(baseExp * shinyBonus * berryBonus * levelMod));
+        const playerExp = Math.max(0, Math.floor(baseExp * 0.75 * shinyBonus * berryBonus * levelMod));
+
         window.player.exp = (window.player.exp || 0) + playerExp;
         appendBattleLog(`You gained ${playerExp} EXP!`, "player");
-
         checkPlayerLevelUp();
         levelUpPokemon(active, pokemonExp);
 
-        // ================= COINS REWARD =================
+        // ===== Coins =====
         const coins = Math.floor(Math.random() * 5 + 5 + wild.level * 0.5);
         window.player.coins += coins;
         appendBattleLog(`You got ${coins} coins!`, "player");
 
-        // ================= LOOT DROP =================
-        const lootChance = 0.25; // 25% chance to drop
+        // ===== Loot =====
+        const lootChance = 0.25;
         if (Math.random() < lootChance && window.player.items) {
           const weightedItems = [];
           Object.keys(window.player.items).forEach(cat => {
             Object.keys(window.player.items[cat]).forEach(item => {
               const weight = (item === "golden" || item === "masterball") ? 1 : 5;
-              for (let i = 0; i < weight; i++) weightedItems.push({cat, item});
+              for (let i = 0; i < weight; i++) weightedItems.push({ cat, item });
             });
           });
-
           if (weightedItems.length) {
             const loot = weightedItems[Math.floor(Math.random() * weightedItems.length)];
             window.player.items[loot.cat][loot.item] = (window.player.items[loot.cat][loot.item] || 0) + 1;
@@ -489,7 +486,7 @@ function playerTurn(action, options = {}) {
           }
         }
 
-        // ================= CLEAR WILD =================
+        // Clear wild
         setTimeout(() => clearSprite(false, "No Wild Pokémon"), 900);
         window.currentWild = null;
         return;
@@ -507,8 +504,6 @@ function playerTurn(action, options = {}) {
     }, 300);
   }
 }
-
-
 
 // ==================== WILD TURN ====================
 function wildTurn() {
@@ -530,13 +525,18 @@ function wildTurn() {
 
   animateAttack("wildSprite", "playerSprite", move, () => {
     const result = calculateDamage(wild, active, moveName);
+
+    // ✅ Append log BEFORE updating screens
+    appendBattleLog(`${wild.pokemon_name} used ${moveName}! ${result.log}`, "wild");
+
+    // Apply damage & energy
     active.currentHP = Math.max(0, active.currentHP - result.damage);
     applyMoveEnergy(wild, move);
 
     updateBattleScreen(active, true);
     updateBattleScreen(wild, false);
-    appendBattleLog(`${wild.pokemon_name} used ${moveName}! ${result.log}`, "wild");
 
+    // Player Pokémon fainted
     if (active.currentHP <= 0) {
       appendBattleLog(`${active.pokemon_name} fainted!`, "wild");
       active.currentEnergy = 0;
@@ -551,7 +551,6 @@ function wildTurn() {
     }
   });
 }
-
 
 
 

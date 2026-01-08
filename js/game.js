@@ -364,35 +364,112 @@ const talentPools = {
   ]
 };
 
-// ------------------ TALENTS ------------------
+
+
+
+// ------------------ CONVERT IVs IF SINGLE VALUE ------------------
+function getIVObj(pokemon) {
+  // If IVs already exist in ivs property, use them
+  if (pokemon.ivs) return pokemon.ivs;
+
+  // If there's a single iv number stored (e.g., 42)
+  if (typeof pokemon.iv === "number") {
+    const atk = Math.min(15, Math.floor(pokemon.iv / 3));
+    const def = Math.min(15, Math.floor((pokemon.iv - atk) / 2));
+    const sta = Math.min(15, pokemon.iv - atk - Math.floor((pokemon.iv - atk) / 2));
+    return { attack: atk, defense: def, stamina: sta };
+  }
+
+  // Default fallback
+  return { attack: 0, defense: 0, stamina: 0 };
+}
+
+// ================== ASSIGN TALENTS (IV-BALANCED, CHANCE-BASED 1-3 TALENTS) ==================
 function assignTalents(pokemon) {
+  if (!pokemon) return [];
+
+  // Ensure IV object exists
+  pokemon.ivs = getIVObj(pokemon);
+  const { attack, defense, stamina } = pokemon.ivs;
+  const ivTotal = attack + defense + stamina;
+
   const assignedTalents = [];
-  const talentCount = Math.random() < 0.5 ? 1 : 2;
+
+  // --- Determine talent count probabilistically based on IV total
+  const talentRoll = Math.random();
+  let talentCount;
+  if (ivTotal === 45) {
+    talentCount = talentRoll < 0.6 ? 3 : 2; // 60% chance 3 talents, 40% 2
+  } else if (ivTotal >= 41) {
+    talentCount = talentRoll < 0.5 ? 3 : 2; // 50% chance 3 talents, 50% 2
+  } else if (ivTotal >= 36) {
+    talentCount = talentRoll < 0.4 ? 3 : 2; // 40% chance 3 talents, 60% 2
+  } else if (ivTotal >= 31) {
+    talentCount = talentRoll < 0.2 ? 2 : 1; // 20% chance 2 talents, 80% 1
+  } else if (ivTotal >= 25) {
+    talentCount = talentRoll < 0.1 ? 2 : 1; // 10% chance 2 talents, 90% 1
+  } else {
+    talentCount = 1; // very low IV → always 1 talent
+  }
+
+  // --- Define rarity weights based on IV
+  let baseWeights;
+  if (ivTotal >= 41) {
+    baseWeights = { Mythical: 0.5, Legendary: 0.3, Epic: 0.15, Rare: 0.05, Uncommon: 0, Common: 0 };
+  } else if (ivTotal >= 36) {
+    baseWeights = { Mythical: 0.3, Legendary: 0.5, Epic: 0.15, Rare: 0.05, Uncommon: 0, Common: 0 };
+  } else if (ivTotal >= 31) {
+    baseWeights = { Mythical: 0.1, Legendary: 0.3, Epic: 0.4, Rare: 0.15, Uncommon: 0.05, Common: 0 };
+  } else if (ivTotal >= 20) {
+    baseWeights = { Mythical: 0, Legendary: 0.05, Epic: 0.2, Rare: 0.4, Uncommon: 0.3, Common: 0.05 };
+  } else {
+    baseWeights = { Mythical: 0, Legendary: 0, Epic: 0.05, Rare: 0.2, Uncommon: 0.3, Common: 0.45 };
+  }
+
+  // Normalize weights
+  const total = Object.values(baseWeights).reduce((a, b) => a + b, 0);
+  for (let key in baseWeights) baseWeights[key] /= total;
+
+  const colorMap = {
+    Mythical: "red",
+    Legendary: "yellow",
+    Epic: "purple",
+    Rare: "blue",
+    Uncommon: "green",
+    Common: "white"
+  };
+
+  const pickRarity = () => {
+    const roll = Math.random();
+    let cumulative = 0;
+    for (const [rarity, weight] of Object.entries(baseWeights)) {
+      cumulative += weight;
+      if (roll <= cumulative) return rarity;
+    }
+    return "Common";
+  };
 
   const shuffleArray = (array) => array.sort(() => Math.random() - 0.5);
 
-  for (let i = 0; i < talentCount; i++) {
-    let pool, rarity;
-    const roll = Math.random();
-    if (roll < 0.01) { pool = [...talentPools.Mythical]; rarity = "Mythical"; }
-    else if (roll < 0.05) { pool = [...talentPools.Legendary]; rarity = "Legendary"; }
-    else if (roll < 0.15) { pool = [...talentPools.Epic]; rarity = "Epic"; }
-    else if (roll < 0.35) { pool = [...talentPools.Rare]; rarity = "Rare"; }
-    else if (roll < 0.65) { pool = [...talentPools.Uncommon]; rarity = "Uncommon"; }
-    else { pool = [...talentPools.Common]; rarity = "Common"; }
-
+  // --- Assign talents without duplicates
+  while (assignedTalents.length < talentCount) {
+    const rarity = pickRarity();
+    const pool = talentPools[rarity] ? [...talentPools[rarity]] : [];
     const availablePool = pool.filter(t => !assignedTalents.some(at => at.name === t.name));
-    if (availablePool.length === 0) continue;
+    if (!availablePool.length) continue;
 
     const talent = shuffleArray(availablePool)[0];
-    const colorMap = { Mythical: "red", Legendary: "yellow", Epic: "purple", Rare: "orange", Uncommon: "green", Common: "white" };
     assignedTalents.push({ ...talent, rarity, color: colorMap[rarity] });
   }
 
+  // --- Apply talents to Pokémon
   pokemon.talents = assignedTalents;
-  calculateStats(pokemon); // <-- apply talents immediately
+  calculateStats(pokemon);
+  applyTalentModifiers(pokemon);
+
   return assignedTalents;
 }
+
 
 
 
@@ -578,64 +655,6 @@ function syncCurrentHP(pokemon) {
   pokemon.maxHP = newMax;
   pokemon.currentHP = Math.floor(newMax * ratio);
   pokemon.currentHP = Math.max(0, Math.min(pokemon.currentHP, pokemon.maxHP));
-}
-
-function getRandomTalents(pokemon, maxTalents = 2) {
-  if (!pokemon) return [];
-
-  const assigned = [];
-  const talentCount = Math.min(maxTalents, 1 + Math.floor(Math.random() * 2)); // 1–2 talents
-
-  // --- Rarity weights depende sa level
-  const level = pokemon.level || 1;
-  let rarityWeights = {};
-  if (level <= 15) {
-    rarityWeights = { Mythical: 0, Legendary: 0.01, Epic: 0.05, Rare: 0.2, Uncommon: 0.3, Common: 0.44 };
-  } else if (level <= 30) {
-    rarityWeights = { Mythical: 0, Legendary: 0.02, Epic: 0.1, Rare: 0.25, Uncommon: 0.3, Common: 0.33 };
-  } else if (level <= 40) {
-    rarityWeights = { Mythical: 0.01, Legendary: 0.05, Epic: 0.2, Rare: 0.3, Uncommon: 0.3, Common: 0.14 };
-  } else { // level 41–50
-    rarityWeights = { Mythical: 0.02, Legendary: 0.1, Epic: 0.3, Rare: 0.35, Uncommon: 0.18, Common: 0.05 };
-  }
-
-  // --- pick rarity based on weights
-  const pickRarity = () => {
-    const roll = Math.random();
-    let cumulative = 0;
-    for (const [rarity, weight] of Object.entries(rarityWeights)) {
-      cumulative += weight;
-      if (roll <= cumulative) return rarity;
-    }
-    return "Common"; // fallback
-  };
-
-  for (let i = 0; i < talentCount; i++) {
-    const rarity = pickRarity();
-    const pool = [...talentPools[rarity]];
-
-    // remove already assigned talents
-    const available = pool.filter(t => !assigned.some(a => a.name === t.name));
-    if (!available.length) continue;
-
-    const talent = available[Math.floor(Math.random() * available.length)];
-
-    const colorMap = {
-      Mythical: "red",
-      Legendary: "yellow",
-      Epic: "purple",
-      Rare: "orange",
-      Uncommon: "green",
-      Common: "white"
-    };
-
-    assigned.push({ ...talent, rarity, color: colorMap[rarity] });
-  }
-
-  // --- Apply talent bonuses to Pokémon
-  applyTalentModifiers({ ...pokemon, talents: assigned });
-
-  return assigned;
 }
 
 

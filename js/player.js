@@ -1,8 +1,8 @@
 // ================== PLAYER INIT ==================
 if (!window.player) {
   window.player = {
-    level: 71,
-    coins: 250,
+    level: 3,
+    coins: 2500,
     stardust: 500,
     party: [],
     items: {},
@@ -45,6 +45,8 @@ function renderIVBar(value, color = "lime") {
 }
 
 
+
+let tooltipInterval = null;
  let partyTooltip = null;
 let tooltipTimeout = null;
 let isTooltipVisible = false;
@@ -54,6 +56,12 @@ window.tooltipTarget = null;
 // -------------------- SHOW TOOLTIP --------------------
 function showTooltip(poke, target) {
   clearTimeout(tooltipTimeout);
+
+// ✅ close old tooltip if different Pokémon (mobile fix)
+  if (isTooltipVisible && window.tooltipPokemon && window.tooltipPokemon !== poke) {
+    hideTooltip();
+  }
+
   window.tooltipPokemon = poke;
   window.tooltipTarget = target;
 
@@ -67,7 +75,7 @@ function showTooltip(poke, target) {
       padding: "10px",
       boxShadow: "3px 3px 8px rgba(0,0,0,0.7)",
       zIndex: 1000,
-      minWidth: "240px",
+      minWidth: "340px",
       maxWidth: "320px",
       borderRadius: "8px",
       fontFamily: "monospace",
@@ -130,7 +138,7 @@ function showTooltip(poke, target) {
     const renderIVBar = (value, color = "lime") => {
       let bar = "";
       for (let i = 0; i < 15; i++) {
-        bar += `<span style="display:inline-block;width:9px;height:6px;margin-right:1px;background:${i < value ? color : '#444'};border-radius:1px;"></span>`;
+        bar += `<span style="display:inline-block;width:20px;height:6px;margin-right:1px;background:${i < value ? color : '#444'};border-radius:1px;"></span>`;
       }
       return `<div style="margin-top:2px;">${bar}</div>`;
     };
@@ -147,59 +155,143 @@ function showTooltip(poke, target) {
       </div>
     `;
 
-    // ------------------ TOOLTIP HTML ------------------
-    partyTooltip.innerHTML = `
-      <div style="display:flex; align-items:center; gap:12px; margin-bottom:10px;">
-        <img src="${getPokemonSprite(poke.pokemon_id, poke.shiny)}" style="width:64px;height:64px;">
-        <div>
-          <strong style="font-size:1.1em;">${shinyIcon}${poke.pokemon_name}</strong><br>
-          Lv ${poke.level} | CP: ${cp}<br>
-          <em>Nature: <span style="color:${natureColor}">${poke.nature}</span></em>
-          ${expBarHTML}
-        </div>
-        <div style="display:flex; flex-direction:column; gap:4px; margin-left:8px;">
-          <button id="evolveButton" style="background:#ffcc00;color:#222;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;font-weight:bold;">Evolve</button>
-          <button id="randomTalentButton" style="background:#1E90FF;color:#fff;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;font-weight:bold;">Random Talent</button>
-          <button id="transferButton" style="background:#ff4444;color:#fff;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;font-weight:bold;">Transfer</button>
-        </div>
-      </div>
+ // ------------------ TOOLTIP HTML ------------------
+partyTooltip.innerHTML = `
+<div style="display:flex; align-items:center; gap:12px; margin-bottom:10px; border:1px solid #555; border-radius:8px; padding:6px; background:#1a1a1a;">
+  <div style="
+    width:72px;
+    height:72px;
+    padding:4px;
+    border-radius:10px;
+    border:${poke.shiny ? "2px solid gold" : "2px solid #555"};
+    background:linear-gradient(145deg,#2a2a2a,#111);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    box-shadow:0 2px 6px rgba(0,0,0,0.6);
+    flex-shrink:0;
+  ">
+    <img src="${getPokemonSprite(poke.pokemon_id, poke.shiny)}"
+         style="
+           width:64px;
+           height:64px;
+           image-rendering:pixelated;
+         ">
+  </div>
 
-      <div style="display:flex; flex-direction:column; font-size:0.9em; margin-bottom:8px;">
-        <strong style="color:#7CFC00;">Base IV Stats (0–15):</strong>
-        <div>Atk: ${poke.ivs.attack ?? 0} / 15 ${renderIVBar(poke.ivs.attack ?? 0, "lime")}</div>
-        <div>Def: ${poke.ivs.defense ?? 0} / 15 ${renderIVBar(poke.ivs.defense ?? 0, "cyan")}</div>
-        <div>HP: ${poke.ivs.stamina ?? 0} / 15 ${renderIVBar(poke.ivs.stamina ?? 0, "orange")}</div>
-      </div>
+  <div>
+    <strong style="font-size:1.1em;">${shinyIcon}${poke.pokemon_name}</strong><br>
+    Lv ${poke.level} | CP: ${cp}<br>
+    <em>Nature: <span style="color:${natureColor}">${poke.nature}</span></em>
+    ${expBarHTML}
+  </div>
 
-      <div style="margin-bottom:8px; padding:6px; border:1px solid #444; border-radius:6px; text-align:center; background:#111;">
-        <div style="font-size:1.2em;">${renderStars(appraisal.stars, appraisal.color)}</div>
-        <div style="font-size:0.85em; color:${appraisal.color}; font-weight:bold;">
-          ${appraisal.label} IV (${poke.ivs.attack + poke.ivs.defense + poke.ivs.stamina}/45)
-        </div>
-      </div>
+  <div style="display:flex; flex-direction:column; gap:6px; margin-left:8px;">
+    <button id="evolveButton" style="
+      background:#ffcc00;
+      color:#222;
+      border:none;
+      padding:8px 0;
+      border-radius:6px;
+      cursor:pointer;
+      font-weight:bold;
+      width:140px;
+      text-align:center;
+      box-shadow:0 2px 4px rgba(0,0,0,0.5);
+      transition:0.2s;
+    " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+      Evolve
+    </button>
 
-      <div style="display:flex; gap:12px; font-size:0.9em; margin-bottom:6px;">
-        <div style="flex:1;">
-          <strong style="color:#FFD700;">Main Stats:</strong>
-          <div>Atk: ${atk}${formatBonus(bonus.atk)}</div>
-          <div>Def: ${def}${formatBonus(bonus.def)}</div>
-          <div>HP: ${currentHP} / ${maxHP}${formatBonus(bonus.sta)}</div>
-        </div>
-        <div style="flex:1;">
-          <strong style="color:#FF4500;">Combat Stats:</strong>
-          <div>Crit: ${(poke.critRateTotal*100).toFixed(1)}%${formatBonus(bonus.critRate,"%")}</div>
-          <div>Crit Dmg: ${poke.critDmgTotal.toFixed(1)}${formatBonus(bonus.critDmg)}</div>
-          <div>Dodge: ${(poke.dodgeRateTotal*100).toFixed(1)}%${formatBonus(bonus.dodge,"%")}</div>
-        </div>
-      </div>
+    <button id="randomTalentButton" style="
+      background:#1E90FF;
+      color:#fff;
+      border:none;
+      padding:8px 0;
+      border-radius:6px;
+      cursor:pointer;
+      font-weight:bold;
+      width:140px;
+      text-align:center;
+      box-shadow:0 2px 4px rgba(0,0,0,0.5);
+      transition:0.2s;
+    " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+      Random Talent
+    </button>
 
-      <div style="margin-top:8px; display:flex; flex-wrap:wrap; align-items:center; gap:4px;">
-        <strong style="color:#1E90FF;">Talent:</strong>
-        <div id="talentContainer">
-          ${poke.talents?.length ? poke.talents.map(t => `<span style="display:inline-block;">${renderTalentWithIcon(t)}</span>`).join("") : "<em>No talents</em>"}
-        </div>
-      </div>
-    `;
+<button id="randomIVButton" style="
+  background:#9b59b6;
+  color:#fff;
+  border:none;
+  padding:8px 0;
+  border-radius:6px;
+  cursor:pointer;
+  font-weight:bold;
+  width:140px;
+  text-align:center;
+  box-shadow:0 2px 4px rgba(0,0,0,0.5);
+  transition:0.2s;
+" onmouseover="this.style.transform='scale(1.05)'" 
+  onmouseout="this.style.transform='scale(1)'">
+  🎲 Randomize IV
+</button>
+
+    <button id="transferButton" style="
+      background:#ff4444;
+      color:#fff;
+      border:none;
+      padding:8px 0;
+      border-radius:6px;
+      cursor:pointer;
+      font-weight:bold;
+      width:140px;
+      text-align:center;
+      box-shadow:0 2px 4px rgba(0,0,0,0.5);
+      transition:0.2s;
+    " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+      Transfer
+    </button>
+  </div>
+</div>
+
+<div style="margin-bottom:8px; padding:6px; border:1px solid #555; border-radius:6px; text-align:center; background:#111;">
+  <div style="font-size:1.2em;">${renderStars(appraisal.stars, appraisal.color)}</div>
+  <div style="font-size:0.85em; color:${appraisal.color}; font-weight:bold;">
+    ${appraisal.label} IV (${poke.ivs.attack + poke.ivs.defense + poke.ivs.stamina}/45)
+  </div>
+</div>
+
+<div style="display:flex; flex-direction:column; font-size:0.9em; margin-bottom:8px; border:1px solid #555; border-radius:6px; padding:6px; background:#111;">
+  <strong style="color:#7CFC00;">Base IV Stats (0–15):</strong>
+  <div>Atk: ${poke.ivs.attack ?? 0} / 15 ${renderIVBar(poke.ivs.attack ?? 0, "lime")}</div>
+  <div>Def: ${poke.ivs.defense ?? 0} / 15 ${renderIVBar(poke.ivs.defense ?? 0, "cyan")}</div>
+  <div>HP: ${poke.ivs.stamina ?? 0} / 15 ${renderIVBar(poke.ivs.stamina ?? 0, "orange")}</div>
+</div>
+
+<div style="display:flex; gap:12px; font-size:0.9em; margin-bottom:6px; border:1px solid #555; border-radius:6px; padding:6px; background:#111;">
+  <div style="flex:1;">
+    <strong style="color:#FFD700;">Main Stats:</strong>
+    <div>Atk: ${atk}${formatBonus(bonus.atk)}</div>
+    <div>Def: ${def}${formatBonus(bonus.def)}</div>
+    <div>HP: ${currentHP} / ${maxHP}${formatBonus(bonus.sta)}</div>
+  </div>
+  <div style="flex:1;">
+    <strong style="color:#FF4500;">Combat Stats:</strong>
+    <div>Crit: ${(poke.critRateTotal*100).toFixed(1)}%${formatBonus(bonus.critRate,"%")}</div>
+    <div>Crit Dmg: ${poke.critDmgTotal.toFixed(1)}${formatBonus(bonus.critDmg)}</div>
+    <div>Dodge: ${(poke.dodgeRateTotal*100).toFixed(1)}%${formatBonus(bonus.dodge,"%")}</div>
+  </div>
+</div>
+
+<div style="margin-top:8px; display:flex; flex-wrap:wrap; align-items:center; gap:4px; border:1px solid #555; border-radius:6px; padding:6px; background:#111;">
+  <strong style="color:#1E90FF;">Talent:</strong>
+  <div id="talentContainer">
+    ${poke.talents?.length ? poke.talents.map(t => `<span style="display:inline-block;">${renderTalentWithIcon(t)}</span>`).join("") : "<em>No talents</em>"}
+  </div>
+</div>
+`;
+
+
 
     // --- BUTTON EVENTS ---
     document.getElementById("evolveButton")?.addEventListener("click", async (e) => {
@@ -216,17 +308,18 @@ function showTooltip(poke, target) {
       appendBattleLog(`${poke.pokemon_name} evolved!`, "player");
     });
 
-    document.getElementById("randomTalentButton")?.addEventListener("click", (e) => {
-      e.stopPropagation();
-      poke.talents = getRandomTalents(poke);
-      applyTalentModifiers(poke);
-      calculateCP(poke);
-      const oldHPPercent = (poke.currentHP ?? poke.staTotal*2)/(poke.staTotal*2);
-      poke.maxHP = Math.floor(poke.staTotal*2);
-      poke.currentHP = Math.max(1, Math.round(poke.maxHP*oldHPPercent));
-      updatePartyDisplay?.();
-      if (window.activePokemon === poke) updateBattleScreen(poke,true);
-    });
+
+  document.getElementById("randomTalentButton")?.addEventListener("click", (e) => {
+  e.stopPropagation();
+  useItem("special", "talentReroll", poke);
+});
+
+document.getElementById("randomIVButton")?.addEventListener("click", (e) => {
+  e.stopPropagation();
+  useItem("special", "ivReroll", poke);
+});
+
+
 
     document.getElementById("transferButton")?.addEventListener("click", () => {
       transferPokemon?.(poke);
@@ -253,11 +346,18 @@ function showTooltip(poke, target) {
   }, 0);
 
   // ------------------ AUTO REFRESH ------------------
-  const interval = setInterval(() => {
-    if (!isTooltipVisible || window.tooltipPokemon !== poke) return clearInterval(interval);
-    renderTooltip();
-  }, 500);
+clearInterval(tooltipInterval);
+tooltipInterval = setInterval(() => {
+  if (!isTooltipVisible || window.tooltipPokemon !== poke) {
+    clearInterval(tooltipInterval);
+    tooltipInterval = null;
+    return;
+  }
+  renderTooltip();
+}, 500);
+
 }
+
 
 // -------------------- HIDE TOOLTIP --------------------
 function hideTooltip() {
@@ -274,6 +374,18 @@ function hideTooltip() {
     }
   }, 100);
 }
+
+document.addEventListener("click", (e) => {
+  if (!isTooltipVisible || !partyTooltip) return;
+
+  // close tooltip if tap is outside
+  if (!partyTooltip.contains(e.target)) {
+    hideTooltip();
+  }
+}, { passive: true });
+
+
+
 function updatePartyDisplay() {
   const partyDisplay = document.getElementById("partyDisplay");
   if (!partyDisplay) return;
@@ -285,7 +397,6 @@ function updatePartyDisplay() {
     return;
   }
 
-  // Safety
   if (player.activeIndex >= player.party.length) player.activeIndex = 0;
 
   player.party.forEach((poke, index) => {
@@ -299,7 +410,7 @@ function updatePartyDisplay() {
     slot.style.textAlign = "center";
     slot.style.verticalAlign = "top";
 
-    // Sprite → click = switch active Pokémon
+    // ---------- SPRITE BUTTON ----------
     const pokeBtn = document.createElement("button");
     pokeBtn.style.display = "block";
     pokeBtn.style.cursor = "pointer";
@@ -315,29 +426,24 @@ function updatePartyDisplay() {
 
       if (player.activeIndex === index) {
         isSwitching = false;
-        return; // already active
+        return;
       }
 
-      await throwPokeballForSwitch(index); // animation first
+      await throwPokeballForSwitch(index);
 
-      // Update active index
       player.activeIndex = index;
-
-      // ✅ Refresh battle screen with new active Pokémon
       const newActive = player.party[player.activeIndex];
       if (newActive) {
         ensureBattleStats(newActive);
-        updateBattleScreen(newActive, true); // updates sprite, CP, energy
-        syncCurrentHP(newActive);            // updates HP bar
+        updateBattleScreen(newActive, true);
+        syncCurrentHP(newActive);
       }
 
-      // ✅ Re-render party highlight
       updatePartyDisplay();
-
       isSwitching = false;
     });
 
-    // Details button
+    // ---------- DETAILS BUTTON ----------
     const detailsBtn = document.createElement("button");
     detailsBtn.textContent = "Details";
     detailsBtn.style.display = "block";
@@ -348,14 +454,23 @@ function updatePartyDisplay() {
 
     detailsBtn.addEventListener("click", e => {
       e.stopPropagation();
+
+      // ✅ MOBILE TOGGLE FIX (CORRECT)
+      if (isTooltipVisible && window.tooltipPokemon === poke) {
+        hideTooltip();
+        return;
+      }
+
       showTooltip(poke, pokeBtn);
     });
 
+    // ---------- APPEND ----------
     slot.appendChild(pokeBtn);
     slot.appendChild(detailsBtn);
     partyDisplay.appendChild(slot);
   });
 }
+
 
 
 document.addEventListener('DOMContentLoaded', () => {
