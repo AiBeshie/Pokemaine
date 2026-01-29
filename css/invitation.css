@@ -1,0 +1,212 @@
+/* ==================================================
+   THEME VARIABLES
+================================================== */
+:root {
+  /* Colors */
+  --clr-bg-main: #f9f4f7;
+  --clr-bg-glass: rgba(29, 39, 75, 0.85);
+  --clr-primary: #1d274b;
+  --clr-secondary: #9b779d;
+  --clr-accent: #c9907c;
+  --clr-soft: #f3e4e1;
+  --clr-text-main: #1d1d1d;
+  --clr-text-light: #ffffff;
+  --clr-text-muted: #6b6b6b;
+  --clr-shadow: rgba(0,0,0,0.25);
+
+  /* Typography */
+  --font-hero: 2.5rem;
+  --font-body: 1rem;
+  --font-countdown: 2rem;
+
+  /* Layout */
+  --radius-lg: 16px;
+  --radius-pill: 50px;
+
+  /* Background */
+  --hero-bg: url("../assets/background/bg1.jpg");
+}
+
+/* ==================================================
+   RESET / BASE
+================================================== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: "Lato", sans-serif;
+  color: var(--clr-text-main);
+  background: var(--hero-bg) center / cover no-repeat fixed;
+  overflow-x: hidden;
+}
+
+img { max-width: 100%; display: block; }
+
+a { text-decoration: none; color: inherit; }
+
+button { cursor: pointer; border: none; }
+
+/* ==================================================
+   HASHTAG
+================================================== */
+#hashtag {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  padding: 6px 0;
+  text-align: center;
+  background: rgba(155, 119, 157, 0.95);
+  color: var(--clr-text-light);
+  font-weight: bold;
+  letter-spacing: 1px;
+  z-index: 1000;
+}
+
+/* ==================================================
+   HERO SECTION
+================================================== */
+#hero {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Fullscreen video background */
+.hero__video {
+  position: absolute;
+  top: 30px; /* dati 0, ngayon may 40px space sa top */
+  left: 0;
+  width: 100vw;
+  height: calc(100vh - 40px); /* height i-adjust para hindi lumampas sa screen */
+  object-fit: cover;
+  z-index: 0;
+}
+
+
+/* Countdown container */
+.hero__countdown-multi {
+  position: absolute;
+  top: max(10%, 80px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+  justify-content: center;
+  flex-wrap: nowrap;
+  z-index: 2;
+  pointer-events: auto;
+}
+
+/* Countdown boxes */
+.countdown-box {
+  text-align: center;
+  background: rgba(50, 20, 70, 0.85);
+  backdrop-filter: blur(15px) saturate(180%);
+  border-radius: 28px;
+  padding: 20px 30px;
+  color: #fff;
+  transition: transform 0.3s ease, background 0.3s ease;
+}
+
+.countdown-box:hover {
+  transform: scale(1.05);
+  background: rgba(50, 20, 70, 0.95);
+}
+
+.countdown-number {
+  font-size: clamp(40px, 5vw, 80px);
+  font-weight: 900;
+  color: #e0d7ff;
+  text-shadow: 0 0 8px #e0d7ff;
+}
+
+.countdown-label {
+  font-size: clamp(16px, 2.5vw, 24px);
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-top: 5px;
+}
+
+/* Hero buttons */
+.hero-buttons {
+  position: absolute;
+  top: 85%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  pointer-events: auto;
+}
+
+.hero-buttons button {
+  padding: clamp(14px, 2.5vw, 22px) clamp(28px, 4vw, 50px);
+  font-size: clamp(1rem, 1.5vw, 1.4rem);
+  border-radius: var(--radius-pill);
+  font-weight: bold;
+  color: #fff;
+  background: linear-gradient(135deg, var(--clr-secondary), var(--clr-primary));
+  transition: transform 0.3s ease, background 0.3s ease;
+}
+
+.hero-buttons button:hover {
+  transform: scale(1.05);
+  background: var(--clr-accent);
+}
+
+/* Confetti overlay */
+#confetti {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* ==================================================
+   RESPONSIVE
+================================================== */
+@media (max-width: 1024px) {
+  .countdown-number { font-size: 50px; }
+  .countdown-label { font-size: 18px; }
+  .hero-logo { max-width: 250px; }
+}
+
+@media (max-width: 768px) {
+  .countdown-number { font-size: 40px; }
+  .countdown-label { font-size: 16px; }
+  .hero-logo { max-width: 220px; }
+  .hero__countdown-multi { gap: 15px; }
+  .hero-buttons button { padding: 12px 28px; font-size: 1rem; }
+}
+
+@media (max-width: 480px) {
+  .countdown-number { font-size: 28px; }
+  .countdown-label { font-size: 14px; }
+  .countdown-box { padding: 14px 18px; min-width: 70px; }
+  .hero-buttons button { padding: 12px 24px; font-size: 0.9rem; }
+  .hero__countdown-multi {
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+}
+
+/* ==================================================
+   ANIMATIONS
+================================================== */
+@keyframes fadeInUp {
+  0% { opacity: 0; transform: translateY(30px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}

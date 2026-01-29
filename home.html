@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- =========================
+       META / SEO
+  ========================= -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Aldrin John & Sharmaine | Wedding Invitation</title>
+
+  <meta name="description" content="Wedding Invitation of Aldrin John & Sharmaine on June 20, 2027. Celebrate our special day!" />
+  <meta property="og:title" content="Aldrin John & Sharmaine | Wedding Invitation" />
+  <meta property="og:description" content="Join us in celebrating our special day on June 20, 2027!" />
+  <meta property="og:image" content="assets/cover.jpg" />
+  <meta property="og:type" content="website" />
+
+  <!-- Favicon -->
+  <link rel="icon" href="assets/favicon.png" type="image/png" />
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Lato&display=swap" rel="stylesheet" />
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/style.css" />
+
+  <!-- AOS -->
+  <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet" />
+</head>
+
+<body>
+
+  <!-- =========================
+       BACKGROUND MUSIC
+  ========================= -->
+  <audio id="bgMusic" loop>
+    <source src="assets/music/music 1.mp3" type="audio/mpeg" />
+  </audio>
+
+  <!-- =========================
+       HASHTAG
+  ========================= -->
+  <div class="hashtag">#AldrinFoundHisMaine</div>
+
+
+<!-- ========================= NAVIGATION ========================= --> <nav class="nav" aria-label="Main navigation"> <div class="nav__brand">A &amp; S</div> <ul class="nav__links"> <li><a href="#hero">Home</a></li> <li><a href="#story">Story</a></li> <li><a href="#details">Details</a></li> <li><a href="#rsvp">RSVP</a></li> <li><a href="#gallery">Gallery</a></li> <li> <button id="settingsToggle" class="nav__icon" aria-label="Open settings">⚙️</button> </li> <li> <button id="musicToggle" class="nav__icon" aria-label="Toggle music">⏸</button> </li> </ul> </nav>
+ 
+
+
+<section id="hero" class="hero">
+  <div class="hero__video-wrapper">
+    <video autoplay muted loop playsinline class="hero__video">
+      <source src="assets/video/wedding_invitation.mp4" type="video/mp4" />
+      Your browser does not support the video tag.
+    </video>
+
+    <!-- Overlay content -->
+    <div class="hero__overlay">
+      <!-- Countdown at 10% from top -->
+      <div id="countdownBoxes" class="hero__countdown-multi hero__countdown-top">
+        <div class="countdown-box">
+          <div id="daysNumber" class="countdown-number">0</div>
+          <div class="countdown-label">days</div>
+        </div>
+        <div class="countdown-box">
+          <div id="hoursNumber" class="countdown-number">0</div>
+          <div class="countdown-label">hrs</div>
+        </div>
+        <div class="countdown-box">
+          <div id="minutesNumber" class="countdown-number">0</div>
+          <div class="countdown-label">mins</div>
+        </div>
+        <div class="countdown-box">
+          <div id="secondsNumber" class="countdown-number">0</div>
+          <div class="countdown-label">secs</div>
+        </div>
+      </div>
+
+      <!-- Centered Save the Date -->
+      <div class="hero__center-content">
+        <button id="saveDateBtn" class="btn btn--primary">📅 Save the Date</button>
+        <small>Adds to your calendar</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confetti -->
+  <div id="confetti"></div>
+</section>
+
+
+  <!-- =========================
+       STORY SECTION
+  ========================= -->
+  <section id="story" class="section" data-aos="fade-up">
+    <h2 class="section__title">Our Story</h2>
+    <p class="section__text">
+      Our journey together began with love, laughter, and countless shared memories.
+      Through every season and every challenge — we chose each other.
+    </p>
+    <img src="https://via.placeholder.com/600x400/9b779d/ffffff?text=Our+Story" alt="Our Story" loading="lazy" />
+  </section>
+
+  <!-- =========================
+       DETAILS SECTION
+  ========================= -->
+  <section id="details" class="section" data-aos="fade-up">
+    <h2 class="section__title">Wedding Details</h2>
+    <p><strong>Date:</strong> June 20, 2027</p>
+    <p><strong>Time:</strong> 2:00 PM</p>
+    <p>
+      <strong>Venue:</strong><br>
+      Mary, Mother of Good Counsel Parish Church<br>
+      Marcelo Green Village, Parañaque City
+    </p>
+
+    <div class="map-container">
+      <iframe
+        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3859.430148297455!2d121.03744291528824!3d14.477099086058796!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3397cfa9f6d78d7d%3A0x4f91183a6be3af0c!2sMary%2C%20Mother%20of%20Good%20Counsel%20Parish%20Church!5e0!3m2!1sen!2sph!4v1705720000000"
+        style="border:0; border-radius:14px;"
+        allowfullscreen=""
+        loading="lazy"
+        referrerpolicy="no-referrer-when-downgrade">
+      </iframe>
+    </div>
+  </section>
+
+  <!-- =========================
+       RSVP SECTION
+  ========================= -->
+  <section id="rsvp" class="section" data-aos="fade-up">
+    <h2 class="section__title">RSVP</h2>
+    <p>Please let us know if you can join our special day 💜</p>
+    <form class="rsvp-form">
+      <label for="rsvpName" class="sr-only">Full Name</label>
+      <input type="text" id="rsvpName" name="name" placeholder="Your Full Name" required />
+
+      <label for="rsvpAttendance" class="sr-only">Attendance</label>
+      <select id="rsvpAttendance" name="attendance" required>
+        <option value="" hidden selected>Will you be attending?</option>
+        <option value="accepts">Accepts with pleasure 💜</option>
+        <option value="not_sure">Not sure yet 🤍</option>
+        <option value="declines">Regretfully declines 😔</option>
+      </select>
+
+      <label for="rsvpMessage" class="sr-only">Message</label>
+      <textarea id="rsvpMessage" name="message" rows="4" placeholder="Leave a message..."></textarea>
+
+      <button type="submit" class="btn btn--secondary">Send RSVP</button>
+    </form>
+  </section>
+
+  <!-- =========================
+       GALLERY SECTION
+  ========================= -->
+  <section id="gallery" class="section" data-aos="fade-up">
+    <h2 class="section__title">Gallery</h2>
+
+    <!-- Prenup Gallery -->
+    <h3>Prenup</h3>
+    <div id="prenup-gallery" class="gallery-wrapper"></div>
+    <div class="pagination" id="prenup-pagination">
+      <button class="prev">Prev</button>
+      <button class="next">Next</button>
+    </div>
+
+    <!-- Church Gallery -->
+    <h3>Church</h3>
+    <div id="church-gallery" class="gallery-wrapper"></div>
+    <div class="pagination" id="church-pagination">
+      <button class="prev">Prev</button>
+      <button class="next">Next</button>
+    </div>
+
+    <!-- Reception Gallery -->
+    <h3>Reception</h3>
+    <div id="reception-gallery" class="gallery-wrapper"></div>
+    <div class="pagination" id="reception-pagination">
+      <button class="prev">Prev</button>
+      <button class="next">Next</button>
+    </div>
+  </section>
+
+  <!-- =========================
+       THANK YOU SECTION
+  ========================= -->
+  <section id="thankyou" class="section" data-aos="fade-up">
+    <h2 class="section__title">Thank You</h2>
+    <p>
+      From the bottom of our hearts, thank you for being part of our journey.
+      Your love and prayers mean the world to us.
+    </p>
+  </section>
+
+  <!-- =========================
+       DRIVE POPUP
+  ========================= -->
+  <div id="drivePopup" class="drive-popup">
+
+    <!-- CLOSE & NAVIGATION BUTTONS -->
+    <button class="drive-close" title="Close">✕</button>
+    <button class="drive-prev" title="Previous">‹</button>
+    <button class="drive-next" title="Next">›</button>
+
+    <!-- DOWNLOAD BUTTON -->
+    <button id="driveDownload" class="drive-download" title="Download">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor">
+        <path d="M5 20h14v-2H5v2zm7-18v12l4-4h-3V4h-2v6H8l4 4z"/>
+      </svg>
+    </button>
+
+    <!-- SHARE BUTTON -->
+    <button id="driveShare" class="drive-share" title="Share">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor">
+        <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7a3.12 3.12 0 000-1.41l7.05-4.11A2.99 2.99 0 1015 5a2.99 2.99 0 001.96.77c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .26.04.51.1.75L8.91 9.91a3.001 3.001 0 00-3.82 0c-.41.39-.66.93-.66 1.5s.25 1.11.66 1.5a3 3 0 003.82 0l7.14 4.15c-.06.23-.1.48-.1.73 0 1.66 1.34 3 3 3s3-1.34 3-3-1.34-3-3-3z"/>
+      </svg>
+    </button>
+
+    <!-- SHARE OPTIONS POPUP -->
+    <div id="sharePopup" class="share-popup">
+      <a href="#" class="share-facebook" target="_blank">Facebook</a>
+      <a href="#" class="share-twitter" target="_blank">Twitter</a>
+      <a href="#" class="share-tiktok" target="_blank">TikTok</a>
+      <a href="#" class="share-instagram" target="_blank">Instagram</a>
+    </div>
+
+    <!-- IMAGE FRAME & CAPTION -->
+<div class="swipe-layer"></div>
+    <iframe id="driveFrame"></iframe>
+    <div id="driveCaption"></div>
+
+  </div>
+
+  <!-- =========================
+       SETTINGS PANEL
+  ========================= -->
+  <div id="settingsPanel" class="settings-panel">
+    <h3>Choose Background</h3>
+    <div class="bg-options">
+      <button data-bg="bg1.jpeg">BG 1</button>
+      <button data-bg="bg2.png">BG 2</button>
+      <button data-bg="bg3.jpg">BG 3</button>
+      <button data-bg="bg4.jpg">BG 4</button>
+      <button data-bg="bg5.jpg">BG 5</button>
+      <button data-bg="bg6.jpg">BG 6</button>
+      <button data-bg="bg7.jpg">BG 7</button>
+      <button data-bg="bg8.jpg">BG 8</button>
+      <button data-bg="bg9.png">BG 9</button>
+    </div>
+  </div>
+
+  <!-- =========================
+       FOOTER
+  ========================= -->
+  <footer class="footer">
+    <p>&copy; 2027 Aldrin John &amp; Sharmaine</p>
+  </footer>
+
+  <!-- =========================
+       SCROLL TO TOP
+  ========================= -->
+  <button id="scrollTopBtn" aria-label="Scroll to top">↑</button>
+
+  <!-- =========================
+       SCRIPTS
+  ========================= -->
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <script src="js/main.js" defer></script>
+</body>
+</html>

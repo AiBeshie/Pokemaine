@@ -1,0 +1,13 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Aldrin & Sharmaine Wedding//EN
+BEGIN:VEVENT
+UID:20270620T160000-aldrin-sharmaine@example.com
+DTSTAMP:20260120T000000Z
+DTSTART:20270620T060000Z
+DTEND:20270620T100000Z
+SUMMARY:Aldrin & Sharmaine Wedding
+DESCRIPTION:We can’t wait to celebrate with you!
+LOCATION:Mary, Mother of Good Counsel Parish Church, Marcelo Green Village, Parañaque City
+END:VEVENT
+END:VCALENDAR
