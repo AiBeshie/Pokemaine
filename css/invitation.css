@@ -23,8 +23,7 @@
   --radius-lg: 16px;
   --radius-pill: 50px;
 
-  /* Background */
-  --hero-bg: url("../assets/background/bg1.jpg");
+
 }
 
 /* ==================================================
@@ -43,7 +42,7 @@ html { scroll-behavior: smooth; }
 body {
   font-family: "Lato", sans-serif;
   color: var(--clr-text-main);
-  background: var(--hero-bg) center / cover no-repeat fixed;
+ 
   overflow-x: hidden;
 }
 
